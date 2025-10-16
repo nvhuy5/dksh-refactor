@@ -41,7 +41,6 @@ from models.class_models import (
 from models.tracking_models import ServiceLog, LogType, TrackingModel
 from utils import log_helpers, read_n_write_s3
 import config_loader
-from utils.middlewares.request_context import get_context_value, set_context_values
 from utils.ext_extraction import FileExtensionProcessor
 from datetime import datetime
 

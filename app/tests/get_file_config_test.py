@@ -3,10 +3,9 @@ from unittest.mock import AsyncMock, patch, MagicMock
 from fastapi_celery.processors.processor_registry import ProcessorRegistry, ProcessorTemplate
 
 @pytest.mark.asyncio
-@patch("fastapi_celery.utils.middlewares.request_context.get_context_value", return_value="test-request-id")
 @patch("fastapi_celery.processors.processor_registry.BEConnector")
 @patch.object(ProcessorTemplate.PDF_001_TEMPLATE, "create_instance")
-async def test_valid_processor_mapping(mock_create_instance, mock_connector, mock_context):
+async def test_valid_processor_mapping(mock_create_instance, mock_connector):
     file_processor = MagicMock()
     file_processor.workflowStepId = "step123"
     file_processor.file_path = "/tmp/sample.pdf"
@@ -37,9 +36,8 @@ async def test_missing_workflow_step_id():
 
 
 @pytest.mark.asyncio
-@patch("fastapi_celery.utils.middlewares.request_context.get_context_value", return_value="test-request-id")
 @patch("fastapi_celery.processors.processor_registry.BEConnector")
-async def test_invalid_be_response_structure(mock_connector, mock_context):
+async def test_invalid_be_response_structure(mock_connector):
     file_processor = MagicMock()
     file_processor.workflowStepId = "step123"
 
@@ -50,9 +48,8 @@ async def test_invalid_be_response_structure(mock_connector, mock_context):
 
 
 @pytest.mark.asyncio
-@patch("fastapi_celery.utils.middlewares.request_context.get_context_value", return_value="test-request-id")
 @patch("fastapi_celery.processors.processor_registry.BEConnector")
-async def test_unknown_template_code(mock_connector, mock_context):
+async def test_unknown_template_code(mock_connector):
     file_processor = MagicMock()
     file_processor.workflowStepId = "step123"
 
@@ -67,10 +64,9 @@ async def test_unknown_template_code(mock_connector, mock_context):
 
 
 @pytest.mark.asyncio
-@patch("fastapi_celery.utils.middlewares.request_context.get_context_value", return_value="test-request-id")
 @patch("fastapi_celery.processors.processor_registry.BEConnector")
 @patch.object(ProcessorTemplate.XML_001_TEMPLATE, "create_instance")
-async def test_response_as_list_format(mock_create_instance, mock_connector, mock_context):
+async def test_response_as_list_format(mock_create_instance, mock_connector):
     file_processor = MagicMock()
     file_processor.workflowStepId = "step456"
     file_processor.file_path = "/tmp/sample.xml"
@@ -88,9 +84,8 @@ async def test_response_as_list_format(mock_create_instance, mock_connector, moc
 
 
 @pytest.mark.asyncio
-@patch("fastapi_celery.utils.middlewares.request_context.get_context_value", return_value="test-request-id")
 @patch("fastapi_celery.processors.processor_registry.BEConnector")
-async def test_connector_get_raises_exception(mock_connector, mock_context):
+async def test_connector_get_raises_exception(mock_connector):
     file_processor = MagicMock()
     file_processor.workflowStepId = "step789"
 

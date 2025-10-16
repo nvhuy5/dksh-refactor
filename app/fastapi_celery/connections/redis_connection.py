@@ -10,7 +10,6 @@ from redis.exceptions import RedisError
 import config_loader
 from utils import log_helpers
 from models.tracking_models import ServiceLog, LogType
-from utils.middlewares.request_context import get_context_value
 
 # ===
 # Set up logging

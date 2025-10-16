@@ -117,64 +117,6 @@ class BEConnector:
                 )
         return None
         
-    # def _request(self, method: str) -> Optional[Dict[str, Any]]:
-    #     """
-    #     Send an HTTP request to the API endpoint using the specified method.
-
-    #     Args:
-    #         method (str): HTTP method to use ('POST', 'GET', or 'PUT').
-
-    #     Returns:
-    #         Optional[Dict[str, Any]]: Response data under the 'data' key, or None if request fails.
-    #     """
-    #     try:
-    #         with httpx.Client(verify=False, timeout=30.0) as client:
-    #             headers = {"X-Token": API_KEY}
-    #             response = client.request(
-    #                 method,
-    #                 self.api_url,
-    #                 headers=headers,
-    #                 json=self.body_data,
-    #                 params=self.params,
-    #             )
-    #             response.raise_for_status()
-
-    #             response_data = response.json()
-    #             return response_data.get("data", {})
-
-    #     except httpx.HTTPStatusError as e:
-    #         log_context = {
-    #             "service": ServiceLog.DATABASE,
-    #             "log_type": LogType.ERROR,
-    #             "method": method,
-    #             "url": str(e.request.url),
-    #             "status_code": e.response.status_code,
-    #             "response_text": e.response.text[:500],
-    #         }
-    #         logger.error(
-    #             f"{method} request failed with HTTP {e.response.status_code}",
-    #             extra={"data": log_context},
-    #         )
-
-    #     except Exception as e:
-    #         log_context = {
-    #             "service": ServiceLog.DATABASE,
-    #             "log_type": LogType.ERROR,
-    #             "method": method,
-    #             "url": self.api_url,
-    #             "params": self.params,
-    #             "body": self.body_data,
-    #             "error": str(e),
-    #             "trace": "".join(traceback.format_exception(type(e), e, e.__traceback__, limit=3)),
-    #         }
-    #         logger.exception(
-    #             f"Unexpected error during {method} request",
-    #             extra={"data": log_context},
-    #         )
-
-    #     return None
-
-
     def get_field(self, key: str) -> Optional[Any]:
         """
         Get a specific field from the metadata dictionary.

@@ -12,7 +12,6 @@ from pydantic import BaseModel
 from utils import log_helpers
 from connections import aws_connection
 from models.tracking_models import ServiceLog, LogType
-from utils.middlewares.request_context import get_context_value
 from typing import Optional
 
 

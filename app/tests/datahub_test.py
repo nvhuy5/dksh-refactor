@@ -1,7 +1,6 @@
 import pytest
 import importlib
 from unittest.mock import patch, MagicMock
-from fastapi_celery.utils.middlewares import request_context
 from pathlib import Path
 
 
@@ -15,9 +14,8 @@ class DummyTrackingModel:
 
 
 class TestFileProcessor:
-    @patch("fastapi_celery.processors.workflow_processors.extract_metadata.get_context_value")
     @patch("fastapi_celery.processors.workflow_processors.extract_metadata.ext_extraction.FileExtensionProcessor")
-    def test_extract_metadata_success(self, mock_ext_processor: MagicMock, mock_get_context_value: MagicMock) -> None:
+    def test_extract_metadata_success(self, mock_ext_processor: MagicMock) -> None:
         """Test successful metadata extraction."""
         def side_effect(key):
             values = {
@@ -26,8 +24,6 @@ class TestFileProcessor:
                 "document_number": "DOC123",
             }
             return values.get(key, None)
-
-        mock_get_context_value.side_effect = side_effect
 
         mock_instance = MagicMock()
         mock_instance.file_path_parent = "/tmp"

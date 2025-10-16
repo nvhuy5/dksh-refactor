@@ -22,7 +22,6 @@ from models.tracking_models import ServiceLog, LogType, TrackingModel
 from typing import Dict, Any, Callable, List, Optional
 from utils import log_helpers
 import config_loader
-from utils.middlewares.request_context import get_context_value, set_context_values
 from datetime import datetime, timezone
 
 # ===

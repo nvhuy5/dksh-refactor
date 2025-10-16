@@ -5,7 +5,6 @@ import json
 from utils import log_helpers
 from models.class_models import StatusEnum, StepOutput, ApiUrl, DocumentType
 from connections.be_connection import BEConnector
-from utils.middlewares.request_context import get_context_value
 from models.tracking_models import ServiceLog, LogType
 
 # === Logger setup ===

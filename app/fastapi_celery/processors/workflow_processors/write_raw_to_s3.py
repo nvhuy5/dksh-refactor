@@ -5,7 +5,6 @@ from utils import log_helpers, read_n_write_s3
 from pathlib import Path
 import logging
 import re
-from utils.middlewares.request_context import get_context_value
 
 # ===
 # Set up logging

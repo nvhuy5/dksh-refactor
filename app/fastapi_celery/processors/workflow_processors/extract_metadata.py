@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from utils import log_helpers, ext_extraction
 from models.tracking_models import ServiceLog, LogType
 from models.class_models import StatusEnum, StepOutput
-from utils.middlewares.request_context import get_context_value
 
 # ===
 # Set up logging

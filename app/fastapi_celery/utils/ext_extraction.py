@@ -10,7 +10,6 @@ from models.class_models import SourceType, DocumentType
 from models.tracking_models import ServiceLog, LogType, TrackingModel
 
 import config_loader
-from utils.middlewares.request_context import get_context_value
 
 # ===
 # === Logging Setup ===
@@ -306,8 +305,8 @@ class FileExtensionProcessor:
                 )
 
         elif self.document_type == DocumentType.MASTER_DATA:
-            sap_masterdata = get_context_value("sap_masterdata")
-            if sap_masterdata:
+
+            if self.tracking_model.sap_masterdata:
                 bucket_name = config_loader.get_config_value(
                     "s3_buckets", "sap_masterdata_bucket"
                 )
