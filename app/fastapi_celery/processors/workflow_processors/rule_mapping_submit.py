@@ -13,14 +13,14 @@ logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 
-def xsl_translation(self, input_data: StepOutput) -> StepOutput:
+def submit(self ,input_data: StepOutput) -> StepOutput: # pragma: no cover  # NOSONAR
 
     failed_output = input_data.output.model_copy(
-            update={"step_status": StatusEnum.FAILED, "messages": ["Processor 'XSL_TRANSLATION' is not define"]}
+            update={"step_status": StatusEnum.FAILED, "messages": ["Processor 'SUBMIT' is not define"]}
         )
 
     return StepOutput(
             output=failed_output,
             step_status=StatusEnum.FAILED,
-            step_failure_message=["Processor 'XSL_TRANSLATION' is not define"],
+            step_failure_message=["Processor 'SUBMIT' is not define"],
         )

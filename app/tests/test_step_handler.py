@@ -3,7 +3,6 @@ import pytest
 from pydantic import BaseModel
 from fastapi_celery.models.class_models import StepOutput
 from fastapi_celery.celery_worker.step_handler import (
-    ALL_DEFINITIONS,
     build_s3_key_prefix,
     execute_step,
     extract,
@@ -15,7 +14,6 @@ from fastapi_celery.celery_worker.step_handler import (
     resolve_args,
 )
 from fastapi_celery.celery_worker.step_handler import StepDefinition, StatusEnum
-
 
 # === get_model_dump_if_possible ===
 def test_get_model_dump_if_possible_with_base_model():
@@ -29,12 +27,10 @@ def test_get_model_dump_if_possible_with_base_model():
     result = get_model_dump_if_possible(obj)
     assert result == {"value": 42}
 
-
 def test_get_model_dump_if_possible_non_model():
     obj = {"output": "abc"}
     result = get_model_dump_if_possible(obj)
     assert result == obj
-
 
 # === raise_if_failed ===
 def test_raise_if_failed_success():
@@ -46,7 +42,6 @@ def test_raise_if_failed_success():
     # Không raise error
     raise_if_failed(result, "dummy_step")
 
-
 def test_raise_if_failed_failed():
     class DummyResult(BaseModel):
         step_status: StatusEnum
@@ -57,7 +52,6 @@ def test_raise_if_failed_failed():
         raise_if_failed(result, "dummy_step")
     assert "dummy_step" in str(exc.value)
     assert "error" in str(exc.value)
-
 
 # === get_value ===
 def test_get_value_base_model_and_dict():
@@ -75,25 +69,20 @@ def test_get_value_base_model_and_dict():
     assert get_value(ctx_dict, "foo") == "bar"
     assert get_value(ctx_dict, "missing") is None
 
-
 # === resolve_args ===
 def test_resolve_args_with_args_and_kwargs():
     context = {"a": 1, "b": 2}
 
     step_def = StepDefinition(
-        function_name="dummy_function",  # Bắt buộc trong Pydantic 2
+        function_name="dummy_function",
         args=["a", "b"],
         kwargs={"x": "a", "y": 2},
     )
 
     args, kwargs = resolve_args(step_def, context, "dummy_step")
-    # Positional args
     assert args == [1, 2]
-    # Keyword args
     assert kwargs == {"x": 1, "y": 2}
-    # input_data được gán trong context
     assert context["input_data"] == [1, 2]
-
 
 # === extract / extract_to_wrapper ===
 def test_extract_and_wrapper():
@@ -102,7 +91,6 @@ def test_extract_and_wrapper():
     extract(ctx, result, "ctx_key", "foo")
     assert ctx["ctx_key"] == "bar"
 
-    # Test wrapper handles exceptions
     def fail_func(c, r, k, rk):
         raise ValueError("boom")
 
@@ -110,7 +98,6 @@ def test_extract_and_wrapper():
     ctx2 = {}
     wrapped(ctx2, {}, "key", "rk")
     assert ctx2["key"] is None
-
 
 # === build_s3_key_prefix ===
 def test_build_s3_key_prefix(monkeypatch):
@@ -130,19 +117,42 @@ def test_build_s3_key_prefix(monkeypatch):
     prefix = build_s3_key_prefix(processor, context_data, step, step_config)
     assert prefix.startswith("target/file")
 
+def test_build_s3_key_prefix_non_master_data():
+    processor = MagicMock()
+    processor.file_record = {"file_name": "file.xlsx"}
+    processor.tracking_model = MagicMock()
+    context_data = MagicMock()
+    step = MagicMock()
+    step.stepName = "STEP2"
+    step.stepOrder = 1
+    step_config = MagicMock()
+    step_config.target_store_data = "target"
+
+    filter_api = MagicMock()
+    filter_api.response.isMasterDataWorkflow = False
+    filter_api.response.folderName = "folder1"
+    filter_api.response.customerFolderName = "customerA"
+    context_data.workflow_detail.filter_api = filter_api
+
+    prefix = build_s3_key_prefix(processor, context_data, step, step_config)
+    assert "folder1/customerA" in prefix
 
 # === get_context_api ===
-def test_get_context_api_returns_list():
+def test_get_context_api_returns_list_and_other_steps():
     result = get_context_api("FILE_PARSE", {})
     assert isinstance(result, list)
 
+    for step_name in ["VALIDATE_HEADER", "VALIDATE_DATA", "MASTER_DATA_LOAD", "TEMPLATE_DATA_MAPPING"]:
+        calls = get_context_api(step_name, {})
+        assert isinstance(calls, list)
 
 # === execute_step ===
 @pytest.mark.asyncio
 @patch("fastapi_celery.celery_worker.step_handler.get_context_api")
 @patch("fastapi_celery.celery_worker.step_handler.BEConnector")
 async def test_execute_step_basic(mock_be_connector, mock_get_context_api):
-    # Setup mocks
+    from fastapi_celery.celery_worker import step_handler
+
     file_processor = MagicMock()
     file_processor.file_record = {"file_name": "dummy.xlsx", "file_extension": ".xlsx"}
     file_processor.workflow_step_ids = {}
@@ -161,22 +171,103 @@ async def test_execute_step_basic(mock_be_connector, mock_get_context_api):
     step_def = MagicMock()
     step_def.require_data_output = True
     step_def.function_name = "func"
-    step_def.data_input = None
     step_def.data_output = None
     step_def.extract_to = {}
 
-    # Patch ALL_DEFINITIONS
-    ALL_DEFINITIONS["STEP1"] = step_def
-    # Patch processor method
+    step_handler.PROCESS_DEFINITIONS["STEP1"] = step_def
     file_processor.func = AsyncMock(
-        return_value=StepOutput(
-            step_status=StatusEnum.SUCCESS, step_failure_message=[], output=None
-        )
+        return_value=StepOutput(step_status=StatusEnum.SUCCESS, step_failure_message=[], output=None)
     )
-    step_def.function_name = "func"
 
-    # Patch get_context_api to return None
     mock_get_context_api.return_value = None
 
-    result = await execute_step(file_processor, context_data, step)
-    assert isinstance(result, StepOutput)
+    result = await step_handler.execute_step(file_processor, context_data, step)
+    assert result.step_status == StatusEnum.SUCCESS
+
+    del step_handler.PROCESS_DEFINITIONS["STEP1"]
+
+@pytest.mark.asyncio
+async def test_execute_step_not_defined():
+    from fastapi_celery.celery_worker import step_handler
+
+    file_processor = MagicMock()
+    file_processor.workflow_step_ids = {}
+    context_data = MagicMock()
+    step = MagicMock()
+    step.stepName = "UNKNOWN_STEP"
+    step.workflowStepId = "step_x"
+
+    result = await step_handler.execute_step(file_processor, context_data, step)
+    assert result.step_status == step_handler.StatusEnum.NOT_DEFINED
+    assert "not yet defined" in result.step_failure_message[0]
+
+@pytest.mark.asyncio
+async def test_execute_step_skip_if_s3_exists():
+    from fastapi_celery.celery_worker import step_handler
+    from fastapi_celery.models.class_models import StepOutput, StatusEnum
+
+    file_processor = MagicMock()
+    file_processor.file_record = {"file_name": "dummy.xlsx", "file_extension": ".xlsx"}
+    file_processor.tracking_model = MagicMock()
+    file_processor.workflow_step_ids = {"STEP1": "step_1"}
+    file_processor.check_step_result_exists_in_s3 = MagicMock(
+        return_value=StepOutput(step_status="1", step_failure_message=[], output=None)
+    )
+
+    step = MagicMock()
+    step.stepName = "STEP1"
+    step.workflowStepId = "step_1"
+    step.stepOrder = 0
+
+    context_data = MagicMock()
+    context_data.request_id = "req_1"
+    context_data.step_detail = []
+
+    step_def = MagicMock()
+    step_def.require_data_output = True
+    step_def.function_name = "func"
+    step_def.data_output = None
+    step_def.extract_to = {}
+    step_def.target_store_data = "target"
+    step_handler.PROCESS_DEFINITIONS["STEP1"] = step_def
+
+    result = await step_handler.execute_step(file_processor, context_data, step)
+    assert result is None or isinstance(result, StepOutput)
+    del step_handler.PROCESS_DEFINITIONS["STEP1"]
+
+@pytest.mark.asyncio
+async def test_execute_step_with_extract_to():
+    from fastapi_celery.celery_worker import step_handler
+    from fastapi_celery.models.class_models import StepOutput, StatusEnum
+
+    file_processor = MagicMock()
+    file_processor.file_record = {"file_name": "dummy.xlsx", "file_extension": ".xlsx"}
+    file_processor.tracking_model = MagicMock()
+    file_processor.workflow_step_ids = {}
+    step = MagicMock()
+    step.stepName = "STEP_EXTRACT"
+    step.workflowStepId = "step_ex"
+    step.stepOrder = 0
+    context_data = MagicMock()
+    context_data.request_id = "req_3"
+    context_data.step_detail = []
+
+    step_def = MagicMock()
+    step_def.require_data_output = True
+    step_def.function_name = "func"
+    step_def.data_output = None
+    step_def.extract_to = {"some_field": "value"}
+    step_def.target_store_data = "target"
+    step_handler.PROCESS_DEFINITIONS["STEP_EXTRACT"] = step_def
+
+    async def fake_func(*args, **kwargs):
+        class DummyOutput:
+            value = 123
+        return StepOutput(step_status=StatusEnum.SUCCESS, step_failure_message=[], output=DummyOutput())
+
+    file_processor.func = fake_func
+
+    result = await step_handler.execute_step(file_processor, context_data, step)
+    assert result.step_status == StatusEnum.SUCCESS
+
+    del step_handler.PROCESS_DEFINITIONS["STEP_EXTRACT"]

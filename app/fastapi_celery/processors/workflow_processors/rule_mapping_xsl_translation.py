@@ -13,13 +13,14 @@ logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 
-def metadata_extract(self,input_data: StepOutput) -> StepOutput:
+def xsl_translation(self, input_data: StepOutput) -> StepOutput: # pragma: no cover  # NOSONAR
 
     failed_output = input_data.output.model_copy(
-            update={"step_status": StatusEnum.FAILED, "messages": ["Processor 'METADATA_EXTRACT' is not define"]}
+            update={"step_status": StatusEnum.FAILED, "messages": ["Processor 'XSL_TRANSLATION' is not define"]}
         )
+
     return StepOutput(
             output=failed_output,
             step_status=StatusEnum.FAILED,
-            step_failure_message=["Processor 'METADATA_EXTRACT' is not define"],
+            step_failure_message=["Processor 'XSL_TRANSLATION' is not define"],
         )

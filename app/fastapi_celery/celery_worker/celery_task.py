@@ -4,7 +4,7 @@ import logging
 import json
 import traceback
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any
 import contextvars
 from celery import shared_task
 from celery.exceptions import Retry, MaxRetriesExceededError
@@ -17,7 +17,7 @@ from models.body_models import (
     WorkflowStepStartBody,
 )
 
-from .step_handler import build_s3_key_prefix, execute_step, raise_if_failed
+from .step_handler import execute_step
 from connections.be_connection import BEConnector
 from connections.redis_connection import RedisConnector
 from processors.processor_base import ProcessorBase
@@ -39,10 +39,9 @@ from models.class_models import (
     WorkflowStep,
 )
 from models.tracking_models import ServiceLog, LogType, TrackingModel
-from utils import log_helpers, read_n_write_s3
+from utils import log_helpers
 import config_loader
-from utils.ext_extraction import FileExtensionProcessor
-from datetime import datetime
+
 
 # === Setup logging ===
 logger_name = "Celery Task Execution"
@@ -84,7 +83,6 @@ def task_execute(self, data: dict) -> str:
         )
         ctx = contextvars.copy_context()
         ctx.run(lambda: asyncio.run(handle_task(tracking_model)))
-        # ctx.run(handle_task(tracking_model))
 
         return "Task completed"
     except Retry:
@@ -104,18 +102,18 @@ def task_execute(self, data: dict) -> str:
                 "data": tracking_model.model_dump(),
             },
         )
-        # try:
-        #     raise self.retry(exc=e, countdown=5)
-        # except MaxRetriesExceededError:
-        #     logger.critical(
-        #         f"[{tracking_model.request_id}] Maximum retries exceeded for task.",
-        #         extra={
-        #             "service": ServiceLog.TASK_EXECUTION,
-        #             "log_type": LogType.ERROR,
-        #             "data": tracking_model.model_dump(),
-        #         },
-        #     )
-        #     raise
+        try:
+            raise self.retry(exc=e, countdown=5)
+        except MaxRetriesExceededError:
+            logger.critical(
+                f"[{tracking_model.request_id}] Maximum retries exceeded for task.",
+                extra={
+                    "service": ServiceLog.TASK_EXECUTION,
+                    "log_type": LogType.ERROR,
+                    "data": tracking_model.model_dump(),
+                },
+            )
+            raise
 
 
 async def handle_task(tracking_model: TrackingModel) -> Dict[str, Any]:
@@ -205,7 +203,7 @@ async def handle_task(tracking_model: TrackingModel) -> Dict[str, Any]:
         sorted_steps = sorted(workflow_model.workflowSteps, key=lambda step: step.stepOrder)
         for step in sorted_steps:
             # === Start step ===
-            start_step_model = await call_workflow_step_start(
+            _ = await call_workflow_step_start(
                 context_data=context_data,
                 step=step,
             )
@@ -254,7 +252,7 @@ async def handle_task(tracking_model: TrackingModel) -> Dict[str, Any]:
             )
 
             # === Finish step ===
-            finish_step_model = await call_workflow_step_finish(
+            _ = await call_workflow_step_finish(
                 context_data=context_data,
                 step=step,
                 step_result=step_result
@@ -263,8 +261,6 @@ async def handle_task(tracking_model: TrackingModel) -> Dict[str, Any]:
             inject_metadata_into_step_output(step_result, context_data, file_processor.document_type)
             if not context_data.is_done:
                 logger.info(f"{step.stepName} - step_result type: {type(step_result)}")
-                file_base = str(file_processor.file_record["file_name"]).removesuffix(
-                    file_processor.file_record["file_extension"])
 
                 # Update step output with the S3 key prefix for json_output
                 # updated_output = step_result.output.model_copy(update={"json_output": context_data.s3_key_prefix})
@@ -305,7 +301,7 @@ async def handle_task(tracking_model: TrackingModel) -> Dict[str, Any]:
         )
 
         # === Finish session ===
-        finish_session_response = await call_workflow_session_finish(
+        _ = await call_workflow_session_finish(
             context_data=context_data,
             tracking_model=tracking_model,
         )

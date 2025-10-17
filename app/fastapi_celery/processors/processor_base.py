@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 import logging
 from models.tracking_models import TrackingModel
-from processors.processor_nodes import WORKFLOW_PROCESSORS, MAPPING_PROCESSORS
+from processors.processor_nodes import WORKFLOW_PROCESSORS
 from utils import log_helpers
 import importlib
 import inspect
@@ -63,10 +63,8 @@ class ProcessorBase:
         Missing modules are logged as warnings.
         Successfully registered functions are logged at debug level.
         """
-        #base_module = "processors.workflow_processors"
         base_modules = {
-            "workflow_processors": "processors.workflow_processors",
-            "rule_mapping_processor": "processors.rule_mapping_processor"
+            "workflow_processors": "processors.workflow_processors"
         }
 
         # Register from WORKFLOW_PROCESSORS (from workflow_processors)
@@ -81,17 +79,6 @@ class ProcessorBase:
             except ModuleNotFoundError:
                 logger.warning(f"Module {module_name} not found in workflow_processors.")
 
-        # Register from MAPPING_PROCESSORS (from rule_mapping_processor)
-        for module_name in MAPPING_PROCESSORS:
-            try:
-                module_path = f"{base_modules['rule_mapping_processor']}.{module_name}"
-                module = importlib.import_module(module_path)
-                for name, func in inspect.getmembers(module, inspect.isfunction):
-                    bound_method = types.MethodType(func, self)
-                    setattr(self, name, bound_method)
-                    logger.debug(f"Registered processor: {name} from {module_path}")
-            except ModuleNotFoundError:
-                logger.warning(f"Module {module_name} not found in rule_mapping_processor.")
 
 
         

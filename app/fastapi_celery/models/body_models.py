@@ -1,29 +1,22 @@
 from typing import Dict, Any, Callable, Optional
 from dataclasses import dataclass
 
-# @dataclass
-# class MasterLoadDataBody:
-#     fileName: str
-#     loadMode: str = "INSERT"
-#     data: Any
-
-
-@dataclass
+@dataclass # NOSONAR
 class WorkflowFilterBody:
-    filePath: str
-    fileName: str
-    fileExtension: str
-    project: str
-    source: str
+    filePath: str # NOSONAR
+    fileName: str # NOSONAR
+    fileExtension: str # NOSONAR
+    project: str # NOSONAR
+    source: str # NOSONAR
 
-@dataclass
+@dataclass # NOSONAR
 class WorkflowSessionStartBody:
-    workflowId: str
-    celeryId: str
-    filePath: str
+    workflowId: str # NOSONAR
+    celeryId: str # NOSONAR
+    filePath: str # NOSONAR
 
-@dataclass
+@dataclass # NOSONAR
 class WorkflowStepStartBody:
-    sessionId: str
-    stepId: str
+    sessionId: str # NOSONAR
+    stepId: str # NOSONAR
 

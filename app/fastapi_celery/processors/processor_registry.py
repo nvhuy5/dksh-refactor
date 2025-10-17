@@ -115,7 +115,6 @@ class ProcessorRegistry:
                 },
             )
 
-            # return processor_enum.create_instance(file_path=file_processor.file_path)
             return processor_enum.create_instance(tracking_model=file_processor.tracking_model)
 
         except Exception as e:

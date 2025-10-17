@@ -57,7 +57,7 @@ def extract_metadata(self) -> StepOutput:
             step_failure_message=None,
         )
     
-    except (FileNotFoundError, ValueError, Exception) as e:
+    except (Exception) as e:
         short_tb = "".join(traceback.format_exception(type(e), e, e.__traceback__, limit=3))
         error_type = type(e).__name__
 

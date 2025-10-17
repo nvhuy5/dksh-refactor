@@ -85,16 +85,13 @@ def test_extract_standard_metadata(tracking_model_xlsx):
     helper.separator = "："
     metadata = {}
 
-    # key:value trên cùng cell
     helper._extract_standard_metadata("Key：Value", 0, ["Key：Value"], metadata)
     assert metadata["Key"] == "Value"
 
-    # key: next cell
     metadata2 = {}
     helper._extract_standard_metadata("Key：", 0, ["Key：", "NextVal"], metadata2)
     assert metadata2["Key"] == "NextVal"
 
-    # key không có separator
     metadata3 = {}
     helper._extract_standard_metadata("NoSepCell", 0, ["NoSepCell"], metadata3)
     assert metadata3 == {}
@@ -139,9 +136,8 @@ def test_extract_metadata_empty(tracking_model_xlsx):
 
 def test_logger(tracking_model_xlsx):
     helper = ExcelHelper(tracking_model_xlsx, SourceType.LOCAL)
-    assert helper.rows is not None  # dummy check logger coverage
+    assert helper.rows is not None
 
 def test_parse_file_to_json(tracking_model_xlsx):
     helper = ExcelHelper(tracking_model_xlsx, SourceType.LOCAL)
-    # chưa implement, trả về None
     assert helper.parse_file_to_json() is None

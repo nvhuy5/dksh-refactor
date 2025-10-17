@@ -11,14 +11,11 @@ WORKFLOW_PROCESSORS = [
     # === Masterdata only ===
     "master_validation",
     "write_raw_to_s3",
-    # === Masterdata only ===
-]
-
-MAPPING_PROCESSORS = [
-    "submit",
-    "xsl_translation",
-    "metadata_extract",
-    "send_to"
+    # === Rule mapping only ===
+    "rule_mapping_submit",
+    "rule_mapping_xsl_translation",
+    "rule_mapping_metadata_extract",
+    "rule_mapping_send_to"
 ]
 
 PROCESS_DEFINITIONS = {
@@ -94,10 +91,7 @@ PROCESS_DEFINITIONS = {
         require_data_output=True,
         target_store_data="workflow-node-materialized",
     ),
-    # === Masterdata only ===
-}
-
-MAPPING_DEFINITIONS = {
+    # === Rule mapping only ===
     "SUBMIT" : StepDefinition(
         function_name = "submit",
         data_input="mapped_data",
@@ -127,3 +121,4 @@ MAPPING_DEFINITIONS = {
         target_store_data="workflow-node-materialized",
     ),
 }
+

@@ -124,13 +124,6 @@ class TemplateValidation:
 
 # === orchestration ===
 async def template_format_validation(self, input_data: StepOutput) -> StepOutput:
-    # request_id = get_context_value("request_id")
-    # traceability_context_values = {
-    #     key: val
-    #     for key in ["file_path", "workflow_name", "workflow_id", "document_number"]
-    #     if (val := get_context_value(key)) is not None
-    # }
-
     # Step 1: call template-parse API
     template_parse_resp = await BEConnector(
         ApiUrl.WORKFLOW_TEMPLATE_PARSE.full_url(),

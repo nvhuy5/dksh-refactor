@@ -181,7 +181,7 @@ def check_step_result_exists_in_s3(
             s3_key = all_possible_rerun_step_files[0]
 
         logger.debug(
-            f"[check_step_result_exists_in_s3] Checking S3 key: {s3_key}",
+            f"[{task_id}]Check_step_result_exists_in_s3: checking S3 key: {s3_key}",
             extra={
                 "service": ServiceLog.FILE_STORAGE,
                 "data": self.tracking_model,

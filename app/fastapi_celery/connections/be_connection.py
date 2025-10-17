@@ -80,7 +80,7 @@ class BEConnector:
         Returns:
             Optional[Dict[str, Any]]: Response data under the 'data' key, or None if request fails.
         """
-        async with httpx.AsyncClient(verify=False, timeout=30.0) as client:
+        async with httpx.AsyncClient() as client:
             try:
                 headers = {"X-Token": API_KEY}
                 response = await client.request(

@@ -1,11 +1,13 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+from celery.exceptions import Retry
 from fastapi_celery.celery_worker import celery_task
 from fastapi_celery.models.class_models import StepOutput, StatusEnum, DocumentType
 from pydantic import BaseModel
 
 
-# === task_execute success (giữ nguyên) ===
+# === task_execute success ===
 @patch("fastapi_celery.celery_worker.celery_task.handle_task", new_callable=AsyncMock)
 def test_task_execute_success(mock_handle_task):
     fake_data = {"file_path": "dummy.xlsx", "project": "proj", "source": "src"}
@@ -20,24 +22,31 @@ def test_task_execute_success(mock_handle_task):
         mock_handle_task.assert_awaited_once()
 
 
-# === task_execute failure (sửa) ===
 @patch("fastapi_celery.celery_worker.celery_task.handle_task", new_callable=AsyncMock)
 def test_task_execute_failure(mock_handle_task):
     fake_data = {"file_path": "dummy.xlsx", "project": "proj", "source": "src"}
     fake_tracking_model = MagicMock()
     fake_tracking_model.request_id = "req_2"
 
-    with patch("fastapi_celery.celery_worker.celery_task.TrackingModel.from_data_request",
-               return_value=fake_tracking_model):
-        mock_handle_task.side_effect = Exception("Boom!")
+    mock_handle_task.side_effect = Exception("Boom!")
 
-        # Patch asyncio.run để exception được raise ra ngoài
-        with patch("asyncio.run", side_effect=lambda coro: coro.__await__().__next__()):
-            celery_task.task_execute.run(fake_data)
+    with patch(
+        "fastapi_celery.celery_worker.celery_task.TrackingModel.from_data_request",
+        return_value=fake_tracking_model
+    ):
+        with patch.object(
+            celery_task.task_execute,
+            "retry",
+            side_effect=lambda *args, **kwargs: (_ for _ in ()).throw(Retry("Task can be retried"))
+        ) as mock_retry:
+            with pytest.raises(Retry):
+                celery_task.task_execute.run(fake_data)
+
             mock_handle_task.assert_awaited_once()
+            assert mock_retry.called
 
 
-# === inject_metadata tests (giữ nguyên) ===
+# === inject_metadata tests ===
 class DummyOutput(BaseModel):
     value: int
 
@@ -79,7 +88,7 @@ async def test_inject_metadata_none_output():
     assert step_result.output is None
 
 
-# === handle_task success (sửa) ===
+# === handle_task success ===
 @pytest.mark.asyncio
 @patch("fastapi_celery.celery_worker.celery_task.execute_step", new_callable=AsyncMock)
 @patch("fastapi_celery.celery_worker.celery_task.get_workflow_filter", new_callable=AsyncMock)
@@ -140,7 +149,7 @@ async def test_handle_task_success(
     mock_step_start.return_value = MagicMock()
     mock_step_finish.return_value = MagicMock()
 
-    # === Patch ContextData để có s3_key_prefix ===
+    # === ContextData patch with s3_key_prefix ===
     from fastapi_celery.celery_worker.celery_task import ContextData
     context_data_instance = ContextData(request_id=fake_tracking_model.request_id)
     context_data_instance.s3_key_prefix = "test_prefix"

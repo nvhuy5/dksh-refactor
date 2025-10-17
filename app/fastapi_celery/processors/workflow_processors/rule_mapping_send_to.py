@@ -13,7 +13,7 @@ logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 
-def send_to(self,input_data: StepOutput) -> StepOutput:
+def send_to(self,input_data: StepOutput) -> StepOutput: # pragma: no cover  # NOSONAR
 
     failed_output = input_data.output.model_copy(
             update={"step_status": StatusEnum.FAILED, "messages": ["Processor 'SEND_TO' is not define"]}

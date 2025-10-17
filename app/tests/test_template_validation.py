@@ -39,7 +39,6 @@ def mock_tracking_model():
 # === Direct class tests ===
 
 def test_data_validation_success(sample_po_parsed, mock_tracking_model):
-    """Tất cả dữ liệu hợp lệ → SUCCESS"""
     schema = [
         {"order": 1, "dataType": "Number", "metadata": '{"required": true}'},
         {"order": 2, "dataType": "String", "metadata": '{"required": true, "maxLength": 10}'},
@@ -52,7 +51,6 @@ def test_data_validation_success(sample_po_parsed, mock_tracking_model):
 
 
 def test_data_validation_required_missing(sample_po_parsed, mock_tracking_model):
-    """Missing required field → FAILED"""
     schema = [{"order": 1, "dataType": "Number", "metadata": '{"required": true, "allowEmpty": false}'}]
     parsed = sample_po_parsed.model_copy(update={"items": [{"col_1": ""}]})
     validator = TemplateValidation(parsed, mock_tracking_model)
@@ -62,7 +60,6 @@ def test_data_validation_required_missing(sample_po_parsed, mock_tracking_model)
 
 
 def test_data_validation_max_length_error(sample_po_parsed, mock_tracking_model):
-    """String exceeds maxLength → FAILED"""
     schema = [{"order": 2, "dataType": "String", "metadata": '{"maxLength": 3}'}]
     parsed = sample_po_parsed.model_copy(update={"items": [{"col_2": "TOO_LONG"}]})
     validator = TemplateValidation(parsed, mock_tracking_model)
@@ -72,7 +69,6 @@ def test_data_validation_max_length_error(sample_po_parsed, mock_tracking_model)
 
 
 def test_data_validation_regex_error(sample_po_parsed, mock_tracking_model):
-    """Regex mismatch → FAILED"""
     schema = [{"order": 2, "dataType": "String", "metadata": '{"regex": "^[A-Z]{3}$"}'}]
     parsed = sample_po_parsed.model_copy(update={"items": [{"col_2": "wrong"}]})
     validator = TemplateValidation(parsed, mock_tracking_model)
@@ -82,7 +78,6 @@ def test_data_validation_regex_error(sample_po_parsed, mock_tracking_model):
 
 
 def test_data_validation_invalid_number(sample_po_parsed, mock_tracking_model):
-    """Invalid number → FAILED"""
     schema = [{"order": 1, "dataType": "Number"}]
     parsed = sample_po_parsed.model_copy(update={"items": [{"col_1": "abc"}]})
     validator = TemplateValidation(parsed, mock_tracking_model)
@@ -92,7 +87,6 @@ def test_data_validation_invalid_number(sample_po_parsed, mock_tracking_model):
 
 
 def test_data_validation_invalid_date(sample_po_parsed, mock_tracking_model):
-    """Invalid date → FAILED"""
     schema = [{"order": 3, "dataType": "Date"}]
     parsed = sample_po_parsed.model_copy(update={"items": [{"col_3": "invalid"}]})
     validator = TemplateValidation(parsed, mock_tracking_model)

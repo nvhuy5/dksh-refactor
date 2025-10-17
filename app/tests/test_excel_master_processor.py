@@ -8,7 +8,6 @@ from fastapi_celery.processors.master_processors.excel_master_processor import E
 
 @pytest.fixture
 def fake_tracking_model():
-    """TrackingModel giả để khởi tạo ExcelMasterProcessor."""
     class FakeTrackingModel:
         def __init__(self, file_path: str):
             self.file_path = file_path
@@ -21,13 +20,11 @@ def fake_tracking_model():
 
 @pytest.fixture
 def processor(fake_tracking_model):
-    """Tạo instance ExcelMasterProcessor với mock tracking_model."""
     model = fake_tracking_model("tests/samples/0808fake_xlsx.xlsx")
     return ExcelMasterProcessor(tracking_model=model, source=SourceType.LOCAL)
 
 
 def _ensure_parsed_object(result):
-    """Normalize kết quả — luôn trả về MasterDataParsed-like object."""
     if isinstance(result, MasterDataParsed):
         return result
     elif isinstance(result, dict):
@@ -39,11 +36,10 @@ def _ensure_parsed_object(result):
 # === Tests ===
 
 def test_parse_file_to_json_success(processor):
-    """✅ Khi parse rows hợp lệ thì trả về MasterDataParsed SUCCESS."""
     processor.rows = [
-        ["Customer：DKSH"],                   # metadata
-        ["Code", "Name", "Age"],              # headers
-        ["001", "John", "30"],                # data rows
+        ["Customer：DKSH"],
+        ["Code", "Name", "Age"],
+        ["001", "John", "30"],
         ["002", "Anna", "25"],
     ]
 
@@ -58,7 +54,6 @@ def test_parse_file_to_json_success(processor):
 
 
 def test_parse_file_to_json_metadata_only(processor):
-    """✅ Khi chỉ có metadata mà không có bảng, vẫn trả về SUCCESS."""
     processor.rows = [
         ["DocType：Master Data"],
         ["Version：1.0"],
@@ -71,7 +66,6 @@ def test_parse_file_to_json_metadata_only(processor):
 
 
 def test_parse_file_to_json_exception(processor, mocker):
-    """✅ Khi extract_metadata raise exception → trả về MasterDataParsed FAILED."""
     processor.rows = [["Bad", "Row"]]
     mocker.patch.object(processor, "extract_metadata", side_effect=Exception("mock error"))
 
@@ -82,7 +76,6 @@ def test_parse_file_to_json_exception(processor, mocker):
 
 
 def test_extract_table_block_with_metadata(processor):
-    """✅ Kiểm tra logic _extract_table_block khi có metadata phía dưới."""
     processor.rows = [
         ["Code", "Name"],
         ["001", "John"],
@@ -99,7 +92,6 @@ def test_extract_table_block_with_metadata(processor):
 
 
 def test_clean_row_strip(processor):
-    """✅ _clean_row loại bỏ khoảng trắng hai đầu."""
     row = ["  Code ", " Name  ", " Age "]
     cleaned = processor._clean_row(row)
     assert cleaned == ["Code", "Name", "Age"]
@@ -109,6 +101,5 @@ def test_clean_row_strip(processor):
     "0808三友WX.xls",
 ])
 def test_real_excel_files_exist(sample_file):
-    """✅ Đảm bảo các file mẫu tồn tại cho test thực tế."""
     path = Path("tests/samples") / sample_file
     assert path.exists(), f"Sample file missing: {path}"

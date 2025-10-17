@@ -40,6 +40,26 @@ class TestXMLProcessor(unittest.TestCase):
         )
 
     @patch(
+    "fastapi_celery.processors.file_processors.xml_processor"
+    ".ext_extraction.FileExtensionProcessor"
+    )
+    def test_extract_text_from_s3(self, mock_processor):
+        mock_file = MagicMock()
+        mock_file.source = "s3"
+        mock_file.file_path = self.dummy_path
+        mock_file._get_file_capacity.return_value = "small"
+        mock_file._get_document_type.return_value = "invoice"
+        mock_file.object_buffer = MagicMock()
+        mock_file.object_buffer.read.return_value = self.xml_content.encode("utf-8")
+        mock_file.object_buffer.seek.return_value = None
+
+        mock_processor.return_value = mock_file
+
+        processor = XMLProcessor(tracking_model=self.tracking_model)
+        text = processor.extract_text()
+        self.assertIn("<Invoice>", text)
+
+    @patch(
         "fastapi_celery.processors.file_processors.xml_processor"
         ".ext_extraction.FileExtensionProcessor"
     )
@@ -76,6 +96,29 @@ class TestXMLProcessor(unittest.TestCase):
         po = processor.find_po_in_xml(root)
         self.assertEqual(po, "PO999888")
 
+    def test_parse_element_with_text_node(self):
+        element = Element("Description")
+        element.text = "Simple text"
+        processor = XMLProcessor(tracking_model=self.tracking_model)
+        result = processor.parse_element(element)
+        self.assertEqual(result, "Simple text")
+
+    def test_find_po_in_attribute(self):
+        element = Element("Invoice", attrib={"ref": "PO555666"})
+        processor = XMLProcessor(tracking_model=self.tracking_model)
+        po = processor.find_po_in_xml(element)
+        self.assertEqual(po, "PO555666")
+
+    def test_find_po_not_found(self):
+        element = Element("Header")
+        sub = Element("Number")
+        sub.text = "NOPOHERE"
+        element.append(sub)
+
+        processor = XMLProcessor(tracking_model=self.tracking_model)
+        po = processor.find_po_in_xml(element)
+        self.assertEqual(po, "")
+
     @patch(
         "fastapi_celery.processors.file_processors.xml_processor"
         ".ext_extraction.FileExtensionProcessor"
@@ -106,3 +149,11 @@ class TestXMLProcessor(unittest.TestCase):
                 self.assertEqual(called_args["document_type"], "order")
                 self.assertEqual(called_args["items"]["Header"]["Number"], "PO123456")
                 self.assertEqual(result, dummy_parsed)
+    
+    def test_parse_file_to_json_invalid_xml(self):
+        bad_content = "<Invoice><Header></Invoice"  # invalid XML
+        with patch("builtins.open", unittest.mock.mock_open(read_data=bad_content)):
+            processor = XMLProcessor(tracking_model=self.tracking_model)
+            with self.assertRaises(Exception):
+                processor.parse_file_to_json()
+

@@ -11,7 +11,7 @@ from models.class_models import (
     StatusEnum,
     StepOutput,
 )
-from models.tracking_models import ServiceLog, LogType
+from models.tracking_models import ServiceLog, LogType, TrackingModel
 
 # ===
 # Set up logging
@@ -25,8 +25,9 @@ logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
 
 
 class MasterValidation:
-    def __init__(self, masterdata_json: MasterDataParsed):
+    def __init__(self, masterdata_json: MasterDataParsed, tracking_model: TrackingModel):
         self.masterdata_json = masterdata_json
+        self.tracking_model = tracking_model
         self.masterdata_headers = self.masterdata_json.headers
         self.masterdata = pd.DataFrame(self.masterdata_json.items)
 
@@ -218,7 +219,7 @@ async def masterdata_header_validation(self, input_data: StepOutput) -> StepOutp
         ApiUrl.MASTERDATA_HEADER_VALIDATION.full_url(),
         params={"fileName": self.file_record["file_name"]},
     ).get()
-    master_data = MasterValidation(masterdata_json=input_data.output)
+    master_data = MasterValidation(masterdata_json=input_data.output, tracking_model=self.tracking_model)
     header_validation_result = master_data.header_validation(
         header_reference=valid_headers
     )
@@ -253,7 +254,7 @@ async def masterdata_data_validation(self, input_data: StepOutput) -> StepOutput
         ApiUrl.MASTERDATA_COLUMN_VALIDATION.full_url(),
         params={"fileName": self.file_record["file_name"]},
     ).get()
-    master_data = MasterValidation(masterdata_json=input_data.output)
+    master_data = MasterValidation(masterdata_json=input_data.output, tracking_model=self.tracking_model)
     data_validation_result = master_data.data_validation(data_reference=valid_data)
 
     return StepOutput(

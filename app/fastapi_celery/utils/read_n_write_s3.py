@@ -85,7 +85,7 @@ def get_object(client, bucket_name: str, object_name: str) -> io.BytesIO | None:
         data = response["Body"].read()
         buffer = io.BytesIO(data)
         return buffer
-    except (ClientError, BotoCoreError) as e:
+    except (ClientError, BotoCoreError):
         return None
 
 
@@ -347,7 +347,7 @@ def read_json_from_s3(bucket_name: str, object_name: str) -> dict | None:
         client = s3_connector.client
         bucket = s3_connector.bucket_name
 
-    except Exception as e:
+    except Exception:
         return None
 
     try:
@@ -361,7 +361,7 @@ def read_json_from_s3(bucket_name: str, object_name: str) -> dict | None:
         data = json.loads(content)
         return data
 
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -394,5 +394,5 @@ def list_objects_with_prefix(bucket_name: str, prefix: str) -> list:
                 keys.append(obj["Key"])
         return keys
 
-    except Exception as e:
+    except Exception:
         return []

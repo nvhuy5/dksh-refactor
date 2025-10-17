@@ -6,7 +6,7 @@ import asyncio
 from urllib.parse import urlparse
 from pydantic import BaseModel
 from connections.be_connection import BEConnector
-from processors.processor_nodes import PROCESS_DEFINITIONS, MAPPING_DEFINITIONS
+from processors.processor_nodes import PROCESS_DEFINITIONS
 from processors.processor_base import ProcessorBase
 from processors.helpers import template_helper
 from models.class_models import (
@@ -33,8 +33,6 @@ base_logger = logging.getLogger(logger_name)
 # Wrap the base logger with the adapter
 logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
 # ===
-
-ALL_DEFINITIONS = {**PROCESS_DEFINITIONS, **MAPPING_DEFINITIONS}
 
 def get_model_dump_if_possible(obj: Any) -> dict | Any:
     """
@@ -157,7 +155,7 @@ def extract(context: dict, result: dict | BaseModel, ctx_key: str, result_key: s
 
 
 # Suppress Cognitive Complexity warning due to step-specific business logic  # NOSONAR
-async def execute_step(file_processor: ProcessorBase, context_data: ContextData, step: WorkflowStep) -> StepOutput:
+async def execute_step(file_processor: ProcessorBase, context_data: ContextData, step: WorkflowStep) -> StepOutput: # NOSONAR
     """
     Executes a single workflow step using the given file processor.
 
@@ -177,7 +175,7 @@ async def execute_step(file_processor: ProcessorBase, context_data: ContextData,
     step_name = step.stepName
     logger.info(f"[{context_data.request_id}] Starting execute step: [{step_name}]")
 
-    step_config = ALL_DEFINITIONS.get(step_name)
+    step_config = PROCESS_DEFINITIONS.get(step_name)
     if not step_config:
         logger.error(f"[{context_data.request_id}] The step [{step_name}] is not yet defined")
 
