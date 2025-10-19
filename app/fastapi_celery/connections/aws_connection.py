@@ -1,5 +1,5 @@
 # Standard Library Imports
-from utils import log_helpers
+from utils import log_helper
 import logging
 import json
 from typing import Optional
@@ -17,11 +17,11 @@ aws_region = config_loader.get_env_variable("s3_buckets", "default_region")
 
 # Logging Setup
 logger_name = "AWS Connection"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 
 
 # === S3 Connector using boto3 ===

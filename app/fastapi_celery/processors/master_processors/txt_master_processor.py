@@ -1,18 +1,19 @@
 import logging
 import traceback
 from pathlib import Path
+from utils import file_extraction
 from models.tracking_models import TrackingModel
 from models.class_models import DocumentType, SourceType, MasterDataParsed, StatusEnum
-from utils import log_helpers, ext_extraction
+from utils import log_helper
 
 # ===
 # Set up logging
 logger_name = "TxtMaster Processor"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 
@@ -23,12 +24,12 @@ class TxtMasterProcessor:
     and uploads the result to S3.
     """
 
-    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.S3):
+    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.SFTP):
         """Initialize the master data processor with a file path and source type.
 
         Args:
             file_path (Path): The path to the master data file.
-            source (SourceType, optional): The source type, defaults to SourceType.S3.
+            source (SourceType, optional): The source type, defaults to SourceType.SFTP.
         """
         self.tracking_model = tracking_model
         self.file_object = None
@@ -47,7 +48,7 @@ class TxtMasterProcessor:
                 and capacity (str).
         """
         try:
-            file_object = ext_extraction.FileExtensionProcessor(tracking_model=self.tracking_model, source=self.source)
+            file_object = file_extraction.FileExtensionProcessor(tracking_model=self.tracking_model, source_type=self.source)
             document_type = file_object._get_document_type()
             capacity = file_object._get_file_capacity()
             original_file_path = self.tracking_model.file_path

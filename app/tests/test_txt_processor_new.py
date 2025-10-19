@@ -18,7 +18,7 @@ def dummy_tracking_model(tmp_path):
 
 # === Txt001Template ===
 def test_txt001_parse_space_separated_lines(dummy_tracking_model):
-    tmpl = Txt001Template(dummy_tracking_model, source=SourceType.S3)
+    tmpl = Txt001Template(dummy_tracking_model, source_type=SourceType.SFTP)
     lines = ["A  B  C", "D  E  F"]
     result = tmpl.parse_space_separated_lines(lines)
     assert result == [
@@ -29,7 +29,7 @@ def test_txt001_parse_space_separated_lines(dummy_tracking_model):
 
 @patch("fastapi_celery.processors.file_processors.txt_processor_new.TxtHelper.parse_file_to_json")
 def test_txt001_parse_file_to_json_calls_super(mock_super, dummy_tracking_model):
-    tmpl = Txt001Template(dummy_tracking_model, source=SourceType.S3)
+    tmpl = Txt001Template(dummy_tracking_model, source_type=SourceType.SFTP)
     tmpl.parse_file_to_json()
     mock_super.assert_called_once()
     assert callable(mock_super.call_args[0][0])
@@ -37,7 +37,7 @@ def test_txt001_parse_file_to_json_calls_super(mock_super, dummy_tracking_model)
 
 # === Txt002Template ===
 def test_txt002_parse_tab_separated_lines(dummy_tracking_model):
-    tmpl = Txt002Template(dummy_tracking_model, source=SourceType.S3)
+    tmpl = Txt002Template(dummy_tracking_model, source=SourceType.SFTP)
     lines = ["A\tB\tC", "X\tY\tZ"]
     result = tmpl.parse_tab_separated_lines(lines)
     assert result == [
@@ -48,14 +48,14 @@ def test_txt002_parse_tab_separated_lines(dummy_tracking_model):
 
 @patch("fastapi_celery.processors.file_processors.txt_processor_new.TxtHelper.parse_file_to_json")
 def test_txt002_parse_file_to_json_calls_super(mock_super, dummy_tracking_model):
-    tmpl = Txt002Template(dummy_tracking_model, source=SourceType.S3)
+    tmpl = Txt002Template(dummy_tracking_model, source=SourceType.SFTP)
     tmpl.parse_file_to_json()
     mock_super.assert_called_once()
 
 
 # === Txt003Template ===
 def test_txt003_parse_space_separated_lines(dummy_tracking_model):
-    tmpl = Txt003Template(dummy_tracking_model, source=SourceType.S3)
+    tmpl = Txt003Template(dummy_tracking_model, source=SourceType.SFTP)
     lines = ["A B C", "1 2 3"]
     result = tmpl.parse_space_separated_lines(lines)
     assert result == [
@@ -66,14 +66,14 @@ def test_txt003_parse_space_separated_lines(dummy_tracking_model):
 
 @patch("fastapi_celery.processors.file_processors.txt_processor_new.TxtHelper.parse_file_to_json")
 def test_txt003_parse_file_to_json_calls_super(mock_super, dummy_tracking_model):
-    tmpl = Txt003Template(dummy_tracking_model, source=SourceType.S3)
+    tmpl = Txt003Template(dummy_tracking_model, source=SourceType.SFTP)
     tmpl.parse_file_to_json()
     mock_super.assert_called_once()
 
 
 # === Txt004Template ===
 def test_txt004_parse_tabular_data_with_headers(dummy_tracking_model):
-    tmpl = Txt004Template(dummy_tracking_model, source=SourceType.S3)
+    tmpl = Txt004Template(dummy_tracking_model, source_type=SourceType.SFTP)
     lines = [
         "2024.07.11  Dynamic List Display",
         "HeaderText\tBatch\tQty",
@@ -89,7 +89,7 @@ def test_txt004_parse_tabular_data_with_headers(dummy_tracking_model):
 
 @patch("fastapi_celery.processors.file_processors.txt_processor_new.TxtHelper.parse_file_to_json")
 def test_txt004_parse_file_to_json_calls_super(mock_super, dummy_tracking_model):
-    tmpl = Txt004Template(dummy_tracking_model, source=SourceType.S3)
+    tmpl = Txt004Template(dummy_tracking_model, source_type=SourceType.SFTP)
     tmpl.parse_file_to_json()
     mock_super.assert_called_once()
 

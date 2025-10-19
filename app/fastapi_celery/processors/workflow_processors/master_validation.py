@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict, Any
-from utils import log_helpers
+from utils import log_helper
 from datetime import datetime
 import pandas as pd
 from connections.be_connection import BEConnector
@@ -16,11 +16,11 @@ from models.tracking_models import ServiceLog, LogType, TrackingModel
 # ===
 # Set up logging
 logger_name = f"Workflow Processor - {__name__}"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 

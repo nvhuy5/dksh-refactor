@@ -7,19 +7,19 @@ from typing import List, Dict, Any, Tuple, Optional
 
 import logging
 from models.tracking_models import TrackingModel
-from utils import ext_extraction
-from utils import log_helpers
+from utils import file_extraction
+from utils import log_helper
 from models.class_models import SourceType, PODataParsed, StatusEnum
 from processors.helpers.pdf_helper import build_success_response, build_failed_response
 
 # ===
 # Set up logging
 logger_name = "PDF Processor"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 LINE_ENDS_WITH_COLON_PATTERN = re.compile(r".+[：:]\s*$")
@@ -31,7 +31,7 @@ class Pdf001Template:
     PDF Processor to extract file name 0C-RLBH75-K0.pdf
     """
 
-    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.S3):
+    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.SFTP):
         self.tracking_model = tracking_model
         self.source = source
         self.po_number = None
@@ -107,14 +107,14 @@ class Pdf001Template:
             PODataParsed: Extracted data object.
         """
         try:
-            file_object = ext_extraction.FileExtensionProcessor(
+            file_object = file_extraction.FileExtensionProcessor(
                 tracking_model=self.tracking_model,
-                source=self.source
+                source_type=self.source
             )
             capacity = file_object._get_file_capacity()
             document_type = file_object._get_document_type()
 
-            if file_object.source == "local":
+            if file_object.source_type == "local":
                 doc = fitz.open(file_object.file_path)
             else:
                 file_object.object_buffer.seek(0)
@@ -158,7 +158,7 @@ class Pdf002Template:
     PDF Processor to extract file name 0819啄木鳥A.pdf, 20240628120641957.pdf, 20240814141011543.pdf
     """
 
-    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.S3):
+    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.SFTP):
         self.tracking_model = tracking_model
         self.source = source
         self.po_number = None
@@ -263,15 +263,15 @@ class Pdf002Template:
             PODataParsed: Extracted data object.
         """
         try:
-            file_object = ext_extraction.FileExtensionProcessor(
-                tracking_model=self.tracking_model, source=self.source
+            file_object = file_extraction.FileExtensionProcessor(
+                tracking_model=self.tracking_model, source_type=self.source
             )
             capacity = file_object._get_file_capacity()
             document_type = file_object._get_document_type()
 
             full_text_lines = []
 
-            if file_object.source == "local":
+            if file_object.source_type == "local":
                 pdf_source = file_object.file_path
             else:
                 file_object.object_buffer.seek(0)
@@ -310,7 +310,7 @@ class Pdf004Template:
     PDF Processor to extract file name 20240722102127096.pdf
     """
 
-    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.S3):
+    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.SFTP):
         self.tracking_model = tracking_model
         self.source = source
         self.po_number = None
@@ -427,16 +427,16 @@ class Pdf004Template:
             PODataParsed: Extracted data object.
         """
         try:
-            file_object = ext_extraction.FileExtensionProcessor(
+            file_object = file_extraction.FileExtensionProcessor(
                 tracking_model=self.tracking_model,
-                source=self.source
+                source_type=self.source
             )
             capacity = file_object._get_file_capacity()
             document_type = file_object._get_document_type()
 
             full_text_lines = []
 
-            if file_object.source == "local":
+            if file_object.source_type == "local":
                 pdf_source = file_object.file_path
             else:
                 file_object.object_buffer.seek(0)
@@ -473,7 +473,7 @@ class Pdf006Template:
     PDF Processor for file A202405220043.pdf
     """
 
-    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.S3):
+    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.SFTP):
         self.tracking_model = tracking_model
         self.source = source
         self.po_number = None
@@ -612,16 +612,16 @@ class Pdf006Template:
         Process PDF into metadata and items using dynamic parsing.
         """
         try:
-            file_object = ext_extraction.FileExtensionProcessor(
+            file_object = file_extraction.FileExtensionProcessor(
                 tracking_model=self.tracking_model,
-                source=self.source
+                source_type=self.source
             )
             capacity = file_object._get_file_capacity()
             document_type = file_object._get_document_type()
 
             full_text_lines: List[str] = []
 
-            if file_object.source == "local":
+            if file_object.source_type == "local":
                 pdf_source = file_object.file_path
             else:
                 file_object.object_buffer.seek(0)
@@ -657,7 +657,7 @@ class Pdf007Template:
     PDF Processor to extract file name O20240620TPB026.PDF
     """
 
-    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.S3):
+    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.SFTP):
         self.tracking_model = tracking_model
         self.source = source
         self.po_number = None
@@ -798,15 +798,15 @@ class Pdf007Template:
             PODataParsed: Extracted data object.
         """
         try:
-            file_object = ext_extraction.FileExtensionProcessor(
-                tracking_model=self.tracking_model, source=self.source
+            file_object = file_extraction.FileExtensionProcessor(
+                tracking_model=self.tracking_model, source_type=self.source
             )
             capacity = file_object._get_file_capacity()
             document_type = file_object._get_document_type()
 
             full_text_lines = []
 
-            if file_object.source == "local":
+            if file_object.source_type == "local":
                 pdf_source = file_object.file_path
             else:
                 file_object.object_buffer.seek(0)
@@ -842,7 +842,7 @@ class Pdf008Template:
     PDF Processor to extract file name RSV_1921_M24081500290_DC3.pdf
     """
 
-    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.S3):
+    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.SFTP):
         self.tracking_model = tracking_model
         self.source = source
         self.po_number = None
@@ -903,15 +903,15 @@ class Pdf008Template:
             PODataParsed: Extracted data object.
         """
         try:
-            file_object = ext_extraction.FileExtensionProcessor(
-                tracking_model=self.tracking_model, source=self.source
+            file_object = file_extraction.FileExtensionProcessor(
+                tracking_model=self.tracking_model, source_type=self.source
             )
             capacity = file_object._get_file_capacity()
             document_type = file_object._get_document_type()
 
             full_text_lines = []
 
-            if file_object.source == "local":
+            if file_object.source_type == "local":
                 pdf_source = file_object.file_path
             else:
                 file_object.object_buffer.seek(0)

@@ -15,7 +15,7 @@ WORKFLOW_PROCESSORS = [
     "rule_mapping_submit",
     "rule_mapping_xsl_translation",
     "rule_mapping_metadata_extract",
-    "rule_mapping_send_to"
+    "rule_mapping_send_to",
 ]
 
 PROCESS_DEFINITIONS = {
@@ -30,7 +30,6 @@ PROCESS_DEFINITIONS = {
         # Write data to S3 after the step
         require_data_output=True,
         target_store_data="workflow-node-materialized",
-
     ),
     "TEMPLATE_DATA_MAPPING": StepDefinition(
         function_name="template_data_mapping",
@@ -92,29 +91,29 @@ PROCESS_DEFINITIONS = {
         target_store_data="workflow-node-materialized",
     ),
     # === Rule mapping only ===
-    "SUBMIT" : StepDefinition(
-        function_name = "submit",
+    "SUBMIT": StepDefinition(
+        function_name="submit",
         data_input="mapped_data",
         data_output="submit_data",
         require_data_output=True,
         target_store_data="workflow-node-materialized",
     ),
-    "XSL_TRANSLATION" : StepDefinition(
-        function_name = "xsl_translation",
+    "XSL_TRANSLATION": StepDefinition(
+        function_name="xsl_translation",
         data_input="mapped_data",
         data_output="xsl_translation_data",
         require_data_output=True,
         target_store_data="workflow-node-materialized",
     ),
-    "METADATA_EXTRACT" : StepDefinition(
-        function_name = "metadata_extract",
+    "METADATA_EXTRACT": StepDefinition(
+        function_name="metadata_extract",
         data_input="mapped_data",
         data_output="metadata_extract",
         require_data_output=True,
         target_store_data="workflow-node-materialized",
     ),
-    "SEND_TO" : StepDefinition(
-        function_name = "send_to",
+    "SEND_TO": StepDefinition(
+        function_name="send_to",
         data_input="mapped_data",
         data_output="send_to",
         require_data_output=True,
@@ -122,3 +121,20 @@ PROCESS_DEFINITIONS = {
     ),
 }
 
+BUCKET_MAP = {
+    "raw_bucket": {
+        "DKSH_TW": "datahub_s3_raw_data_tw",
+        "DKSH_VN": "datahub_s3_raw_data_vn",
+    },
+    "target_bucket": {
+        "order": {
+            "DKSH_TW": "datahub_s3_process_data_tw",
+            "DKSH_VN": "datahub_s3_process_data_vn",
+        },
+        "master_data": {
+            "sap_masterdata": "sap_masterdata_bucket",
+            "DKSH_TW": "tw_masterdata_bucket",
+            "DKSH_VN": "vn_masterdata_bucket",
+        },
+    },
+}

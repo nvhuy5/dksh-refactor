@@ -9,15 +9,14 @@ from urllib.parse import urljoin
 
 # === Source Type Enum ===
 class SourceType(str, Enum):
-    """Enum representing the source type of data.
-
-    Attributes:
-        LOCAL (str): Indicates a local file source.
-        S3 (str): Indicates an S3 bucket source.
+    """
+    Enum representing the source type of data.
     """
 
     LOCAL = "local"
-    S3 = "s3"
+    SFTP = "sftp"
+    EMAIL = "email"
+    THIRD_PARTY = "third_party"
 
 
 class Environment(str, Enum):

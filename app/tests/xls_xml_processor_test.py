@@ -40,7 +40,7 @@ def expected_metadata():
 def processor_local():
     tm = TrackingModel.model_construct(file_path="dummy.xlsx")
     with patch.object(ExcelHelper, "read_rows", return_value=[]):
-        yield ExcelHelper(tracking_model=tm, source=SourceType.LOCAL)
+        yield ExcelHelper(tracking_model=tm, source_type=SourceType.LOCAL)
 
 
 # Test extract_metadata for standard key:value
@@ -92,7 +92,7 @@ def test_read_rows_local(mock_read_excel, mock_ext_processor, sample_dataframe):
     mock_read_excel.return_value = {"Sheet1": sample_dataframe}
 
     tm = TrackingModel.model_construct(file_path="dummy.xlsx")
-    processor = ExcelHelper(tracking_model=tm, source=SourceType.LOCAL)
+    processor = ExcelHelper(tracking_model=tm, source_type=SourceType.LOCAL)
     rows = processor.read_rows()
 
     assert len(rows) == 4

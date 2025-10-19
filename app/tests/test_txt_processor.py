@@ -36,7 +36,7 @@ def mock_file_processor_local(monkeypatch, dummy_tracking_model):
 def mock_file_processor_s3(monkeypatch, dummy_tracking_model):
     """Mock FileExtensionProcessor for S3 source"""
     mock_instance = MagicMock()
-    mock_instance.source = SourceType.S3
+    mock_instance.source = SourceType.SFTP
     mock_instance.object_buffer = io.BytesIO("採購單-PO123\n料品代號\t品名\t數量\nA001\tABC\t10".encode("utf-8"))
     mock_instance._get_file_capacity.return_value = "2.34 KB"
     mock_instance._get_document_type.return_value = DocumentType.ORDER
@@ -62,7 +62,7 @@ def test_extract_text_local(mock_file_processor_local, dummy_tracking_model):
 
 def test_extract_text_s3(mock_file_processor_s3, dummy_tracking_model):
     """Test extracting text from S3 buffer"""
-    processor = TXTProcessor(dummy_tracking_model, source=SourceType.S3)
+    processor = TXTProcessor(dummy_tracking_model, source=SourceType.SFTP)
     result = processor.extract_text()
     assert "PO123" in result
     assert "ABC" in result
@@ -70,7 +70,7 @@ def test_extract_text_s3(mock_file_processor_s3, dummy_tracking_model):
 
 def test_parse_file_to_json_basic(mock_file_processor_s3, dummy_tracking_model):
     """Test normal parse from S3 source"""
-    processor = TXTProcessor(dummy_tracking_model, source=SourceType.S3)
+    processor = TXTProcessor(dummy_tracking_model, source=SourceType.SFTP)
     parsed = processor.parse_file_to_json()
     print("\n[DEBUG] type(parsed):", type(parsed))
     print("[DEBUG] parsed value:", parsed)
@@ -96,7 +96,7 @@ B001\tXYZ\t5
 """
     mock_file_processor_s3.object_buffer = io.BytesIO(text_data.encode("utf-8"))
 
-    processor = TXTProcessor(dummy_tracking_model, source=SourceType.S3)
+    processor = TXTProcessor(dummy_tracking_model, source=SourceType.SFTP)
     parsed = processor.parse_file_to_json()
 
     assert parsed.po_number == "PO999"
@@ -110,7 +110,7 @@ def test_parse_file_with_incomplete_product(mock_file_processor_s3, dummy_tracki
     text_data = "採購單-PO777\n料品代號\t品名\t數量\nC001\tSample\n"
     mock_file_processor_s3.object_buffer = io.BytesIO(text_data.encode("utf-8"))
 
-    processor = TXTProcessor(dummy_tracking_model, source=SourceType.S3)
+    processor = TXTProcessor(dummy_tracking_model, source=SourceType.SFTP)
     parsed = processor.parse_file_to_json()
 
     assert parsed.items["products"][0]["數量"] == ""
@@ -125,7 +125,7 @@ D001\tTest\t1
 ---
 """
     mock_file_processor_s3.object_buffer = io.BytesIO(text_data.encode("utf-8"))
-    processor = TXTProcessor(dummy_tracking_model, source=SourceType.S3)
+    processor = TXTProcessor(dummy_tracking_model, source=SourceType.SFTP)
     parsed = processor.parse_file_to_json()
     assert parsed.po_number == "PO555"
     assert len(parsed.items["products"]) == 1
@@ -135,7 +135,7 @@ def test_parse_file_no_products(mock_file_processor_s3, dummy_tracking_model):
     """File with no table section"""
     text_data = "採購單-PO321\n單號：T002"
     mock_file_processor_s3.object_buffer = io.BytesIO(text_data.encode("utf-8"))
-    processor = TXTProcessor(dummy_tracking_model, source=SourceType.S3)
+    processor = TXTProcessor(dummy_tracking_model, source=SourceType.SFTP)
     parsed = processor.parse_file_to_json()
     assert "products" not in parsed.items
 
@@ -145,7 +145,7 @@ def test_logger_called(monkeypatch, mock_file_processor_s3, dummy_tracking_model
     mock_logger = MagicMock()
     monkeypatch.setattr("fastapi_celery.processors.file_processors.txt_processor.logger", mock_logger)
 
-    processor = TXTProcessor(dummy_tracking_model, source=SourceType.S3)
+    processor = TXTProcessor(dummy_tracking_model, source=SourceType.SFTP)
     processor.parse_file_to_json()
 
     mock_logger.info.assert_any_call("File has been proceeded successfully!")

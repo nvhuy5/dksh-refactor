@@ -86,7 +86,7 @@ class TestFileProcessor:
         assert result.step_status.name == "FAILED"
 
 
-from fastapi_celery.utils import ext_extraction
+from fastapi_celery.utils import file_extraction
 
 
 def test_valid_extension(monkeypatch, base_path: Path = Path("app/tests/samples")) -> None:
@@ -98,12 +98,12 @@ def test_valid_extension(monkeypatch, base_path: Path = Path("app/tests/samples"
 
     monkeypatch.setattr("os.path.isfile", lambda path: True)
 
-    from fastapi_celery.utils import ext_extraction
-    monkeypatch.setattr(ext_extraction, "TrackingModel", DummyTracking)
+    from fastapi_celery.utils import file_extraction
+    monkeypatch.setattr(file_extraction, "TrackingModel", DummyTracking)
 
     file_path = base_path / "0C-RLBH75-K0.pdf"
-    file_processor = ext_extraction.FileExtensionProcessor(
-        DummyTracking(str(file_path)), source="local"
+    file_processor = file_extraction.FileExtensionProcessor(
+        DummyTracking(str(file_path)), source_type="local"
     )
 
     assert file_processor.file_extension == ".pdf"

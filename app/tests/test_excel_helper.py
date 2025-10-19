@@ -41,7 +41,7 @@ def tracking_model_xls():
 
 def test_read_rows_xlsx(tracking_model_xlsx):
     """Đọc .xlsx với engine openpyxl"""
-    helper = ExcelHelper(tracking_model_xlsx, source=SourceType.LOCAL)
+    helper = ExcelHelper(tracking_model_xlsx, source_type=SourceType.LOCAL)
     assert isinstance(helper.rows, list)
     assert len(helper.rows) > 0
     assert helper.document_type is not None
@@ -49,7 +49,7 @@ def test_read_rows_xlsx(tracking_model_xlsx):
 
 def test_read_rows_xls(tracking_model_xls):
     """Đọc .xls với engine xlrd"""
-    helper = ExcelHelper(tracking_model_xls, source=SourceType.LOCAL)
+    helper = ExcelHelper(tracking_model_xls, source_type=SourceType.LOCAL)
     assert isinstance(helper.rows, list)
     assert len(helper.rows) > 0
     assert helper.document_type is not None

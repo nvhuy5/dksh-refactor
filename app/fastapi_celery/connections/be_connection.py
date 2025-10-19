@@ -4,17 +4,17 @@ import traceback
 import logging
 
 from models.tracking_models import ServiceLog, LogType
-from utils import log_helpers
+from utils import log_helper
 import config_loader
 
 # ===
 # Set up logging
 logger_name = "Backend API Connection"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 API_KEY = config_loader.get_env_variable("JWT_SECRET_KEY")

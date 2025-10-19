@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import logging
 from models.tracking_models import TrackingModel
 from processors.processor_nodes import WORKFLOW_PROCESSORS
-from utils import log_helpers
+from utils import log_helper
 import importlib
 import inspect
 import types
@@ -11,11 +11,11 @@ import types
 # ===
 # Set up logging
 logger_name = "ProcessorBase"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 
@@ -41,12 +41,9 @@ class ProcessorBase:
             tracking_model (TrackingModel): The model used for tracking and logging
                 processing status and metadata throughout the workflow.
         """
-        self.file_record = {}
-        self.source_type = None
-        self.document_type = None
-        self.target_bucket_name = None
+
         self.tracking_model = tracking_model
-        self.current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        self.file_record = {}
         self._register_workflow_processors()
 
     def run(self):

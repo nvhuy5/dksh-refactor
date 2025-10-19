@@ -4,7 +4,7 @@ import re
 from typing import List, Dict, Any
 import pandas as pd
 
-from utils import log_helpers
+from utils import log_helper
 from connections.be_connection import BEConnector
 from models.class_models import (
     ApiUrl,
@@ -16,9 +16,9 @@ from models.tracking_models import ServiceLog, LogType, TrackingModel
 
 # === logging setup ===
 logger_name = f"Workflow Processor - {__name__}"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 
 
 class TemplateValidation:

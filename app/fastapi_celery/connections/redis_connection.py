@@ -8,17 +8,17 @@ import redis
 from redis.exceptions import RedisError
 
 import config_loader
-from utils import log_helpers
+from utils import log_helper
 from models.tracking_models import ServiceLog, LogType
 
 # ===
 # Set up logging
 logger_name = "Redis Connection Config"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 # === REDIS database === #

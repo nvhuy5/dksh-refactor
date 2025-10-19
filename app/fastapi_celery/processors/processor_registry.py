@@ -3,12 +3,12 @@ from typing import Optional, Type
 from processors.processor_template import ProcessorTemplate
 from connections.be_connection import BEConnector
 from models.class_models import ApiUrl, DocumentType
-from utils import log_helpers
+from utils import log_helper
 
 # === Logging ===
 logger_name = "ProcessorRegistry"
-log_helpers.logging_config(logger_name)
-logger = log_helpers.ValidatingLoggerAdapter(logging.getLogger(logger_name), {})
+log_helper.logging_config(logger_name)
+logger = log_helper.ValidatingLoggerAdapter(logging.getLogger(logger_name), {})
 
 
 class ProcessorRegistry:

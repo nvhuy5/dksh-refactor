@@ -1,18 +1,19 @@
 from pathlib import Path
 
 import logging
+from utils import file_extraction
 from models.tracking_models import TrackingModel
 from models.class_models import SourceType, PODataParsed, StatusEnum
-from utils import log_helpers, ext_extraction
+from utils import log_helper
 
 # ===
 # Set up logging
 logger_name = "TXT Processor"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 PO_MAPPING_KEY = "採購單"
@@ -27,12 +28,12 @@ class TXTProcessor:
     text and parse it into JSON format.
     """
 
-    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.S3):
+    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.SFTP):
         """Initialize the TXT processor with a file path and source type.
 
         Args:
             file (Path): The path to the TXT file.
-            source (SourceType, optional): The source type, defaults to SourceType.S3.
+            source (SourceType, optional): The source type, defaults to SourceType.SFTP.
         """
         self.tracking_model = tracking_model
         self.source = source
@@ -49,12 +50,12 @@ class TXTProcessor:
         Extracts and returns the text content of the file.
         Works for both local and S3 sources.
         """
-        file_object = ext_extraction.FileExtensionProcessor(
-            tracking_model=self.tracking_model, source=self.source
+        file_object = file_extraction.FileExtensionProcessor(
+            tracking_model=self.tracking_model, source_type=self.source
         )
         self.capacity = file_object._get_file_capacity()
         self.document_type = file_object._get_document_type()
-        if file_object.source == "local":
+        if file_object.source_type == "local":
             with open(file_object.file_path, "r", encoding="utf-8") as f:
                 text = f.read()
         else:

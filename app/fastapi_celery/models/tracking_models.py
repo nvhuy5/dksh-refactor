@@ -7,23 +7,31 @@ from models.class_models import FilePathRequest
 
 class TrackingModel(BaseModel):
     """
-    Model representing traceability context data shared across the project.
+    Traceability context for a file or workflow request.
 
     Attributes:
-        request_id (str): Unique ID to trace the request.
-        document_number (Optional[str]): Optional document number for additional context.
+        request_id (str): Unique ID for tracing the request.
+        file_path (str | None): File path, if applicable.
+        project_name (str | None): Project associated with the file.
+        source_name (str | None): Source of the file or data.
+        workflow_id (str | None): Workflow ID.
+        workflow_name (str | None): Workflow name.
+        document_number (str | None): Optional document number.
+        document_type (str | None): Type of document (e.g., MASTER_DATA, ORDER).
+        sap_masterdata (bool | None): Flag indicating SAP master data.
+        rerun_attempt (int | None): Retry attempt number, if any.
     """
 
     request_id: str
-    file_path: Optional[str] = None
-    project_name: Optional[str] = None
-    source_name: Optional[str] = None
-    workflow_id: Optional[str] = None
-    workflow_name: Optional[str] = None
-    document_number: Optional[str] = None
-    document_type: Optional[str] = None
-    sap_masterdata: Optional[bool] = None
-    rerun_attempt: Optional[int] = None
+    file_path: str | None = None
+    project_name: str | None = None
+    source_name: str | None = None
+    workflow_id: str | None = None
+    workflow_name: str | None = None
+    document_number: str | None = None
+    document_type: str | None = None
+    sap_masterdata: bool | None = None
+    rerun_attempt: int | None = None
 
     @classmethod
     def from_data_request(cls, data: FilePathRequest) -> "TrackingModel":
@@ -48,7 +56,7 @@ class ServiceLog(str, Enum):
     TASK_EXECUTION = "task-execution"
     NOTIFICATION = "notification-service"
 
-    METADATA_EXTRACTION = "metadata-extraction"
+    FILE_EXTRACTION = "file-extraction"
     METADATA_VALIDATION = "metadata-validation"
     DOCUMENT_PARSER = "document-parser"
     VALIDATION = "input-validation"
@@ -62,14 +70,8 @@ class ServiceLog(str, Enum):
 
 class LogType(str, Enum):
     """
-    Enum representing the type of log being recorded.
-    Helps distinguish between different log purposes.
-
-    Attributes:
-        "access": Logs for normal operations, requests, etc.
-        "error": Logs for exceptions, failures, or unexpected behavior
+    Enum representing the purpose of a log entry.
     """
-
     ACCESS = "access"
     TASK = "task"
     ERROR = "error"

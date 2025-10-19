@@ -1,18 +1,19 @@
 from pathlib import Path
 import logging
 
+from utils import file_extraction
 from models.tracking_models import TrackingModel
 from models.class_models import SourceType, PODataParsed, StatusEnum
-from utils import log_helpers, ext_extraction
+from utils import log_helper
 
 # ===
 # Set up logging
 logger_name = "Txt Helper"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 
@@ -24,14 +25,14 @@ class TxtHelper:
     def __init__(
         self,
         tracking_model: TrackingModel,
-        source: SourceType = SourceType.S3,
+        source_type: SourceType = SourceType.SFTP,
         encoding: str = "utf-8",
     ):
         """
         Initialize the TXT processor with file path, source type, and encoding.
         """
         self.tracking_model = tracking_model
-        self.source = source
+        self.source_type = source_type
         self.encoding = encoding
         self.capacity = None
         self.document_type = None
@@ -40,12 +41,12 @@ class TxtHelper:
         """
         Extract and return the text content of the file using the specified encoding.
         """
-        file_object = ext_extraction.FileExtensionProcessor(tracking_model=self.tracking_model, source=self.source)
+        file_object = file_extraction.FileExtensionProcessor(tracking_model=self.tracking_model, source_type=self.source_type)
 
         self.capacity = file_object._get_file_capacity()
         self.document_type = file_object._get_document_type()
 
-        if file_object.source == "local":
+        if file_object.source_type == "local":
             with open(file_object.file_path, "r", encoding=self.encoding) as f:
                 return f.read()
         else:

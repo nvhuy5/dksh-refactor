@@ -20,18 +20,18 @@ from models.class_models import (
 )
 from models.tracking_models import ServiceLog, LogType, TrackingModel
 from typing import Dict, Any, Callable, List, Optional
-from utils import log_helpers
+from utils import log_helper
 import config_loader
 from datetime import datetime, timezone
 
 # ===
 # Set up logging
 logger_name = "Step Handler"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 def get_model_dump_if_possible(obj: Any) -> dict | Any:

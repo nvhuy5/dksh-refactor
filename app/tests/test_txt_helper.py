@@ -31,7 +31,7 @@ def test_extract_text_s3_mode(monkeypatch, dummy_tracking_model):
 
     monkeypatch.setattr("utils.ext_extraction.FileExtensionProcessor", lambda **_: mock_processor)
 
-    helper = TxtHelper(dummy_tracking_model, source=SourceType.S3)
+    helper = TxtHelper(dummy_tracking_model, source_type=SourceType.SFTP)
     result = helper.extract_text()
 
     assert result == "hello\nworld"
@@ -54,7 +54,7 @@ def test_extract_text_local_mode(monkeypatch, tmp_path, dummy_tracking_model):
 
     monkeypatch.setattr("utils.ext_extraction.FileExtensionProcessor", lambda **_: mock_processor)
 
-    helper = TxtHelper(dummy_tracking_model, source=SourceType.LOCAL)
+    helper = TxtHelper(dummy_tracking_model, source_type=SourceType.LOCAL)
     result = helper.extract_text()
 
     assert result == "local mode test"

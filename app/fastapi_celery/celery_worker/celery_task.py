@@ -39,17 +39,17 @@ from models.class_models import (
     WorkflowStep,
 )
 from models.tracking_models import ServiceLog, LogType, TrackingModel
-from utils import log_helpers
+from utils import log_helper
 import config_loader
 
 
 # === Setup logging ===
 logger_name = "Celery Task Execution"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 
 # === Load config ===
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -83,25 +83,29 @@ def task_execute(self, data: dict) -> str:
         )
         ctx = contextvars.copy_context()
         ctx.run(lambda: asyncio.run(handle_task(tracking_model)))
-
         return "Task completed"
+    
     except Retry:
         logger.warning(f"[{tracking_model.request_id}] Task is retrying...")
         raise
     except Exception as e:
         retry_count = self.request.retries
         max_retries = self.max_retries or 3
-        short_tb = "".join(
-            traceback.format_exception(type(e), e, e.__traceback__, limit=3)
-        )
+
+        # Capture full traceback as structured string list
+        full_tb = traceback.format_exception(type(e), e, e.__traceback__)
+
         logger.error(
-            f"[{tracking_model.request_id}] Task execution failed (attempt {retry_count}/{max_retries}): {e}\n{short_tb}",
+            f"[{tracking_model.request_id}] Task execution failed "
+            f"(attempt {retry_count}/{max_retries}): {e}",
             extra={
                 "service": ServiceLog.TASK_EXECUTION,
                 "log_type": LogType.ERROR,
                 "data": tracking_model.model_dump(),
+                "traceback": full_tb,  # structured for ELK / Kibana
             },
         )
+
         try:
             raise self.retry(exc=e, countdown=5)
         except MaxRetriesExceededError:
@@ -111,6 +115,7 @@ def task_execute(self, data: dict) -> str:
                     "service": ServiceLog.TASK_EXECUTION,
                     "log_type": LogType.ERROR,
                     "data": tracking_model.model_dump(),
+                    "traceback": full_tb,  # keep traceback for final failure
                 },
             )
             raise
@@ -151,7 +156,7 @@ async def handle_task(tracking_model: TrackingModel) -> Dict[str, Any]:
     logger.info(
         f"[{tracking_model.request_id}] base processor result:\n",
         extra={
-            "service": ServiceLog.METADATA_EXTRACTION,
+            "service": ServiceLog.FILE_EXTRACTION,
             "log_type": LogType.TASK,
             "data": file_processor.file_record,
         },
@@ -165,6 +170,9 @@ async def handle_task(tracking_model: TrackingModel) -> Dict[str, Any]:
         file_processor=file_processor,
         tracking_model=tracking_model,
     )
+
+    file_processor.file_record["folder_name"] = workflow_model.folderName
+    file_processor.file_record["customer_foldername"] = workflow_model.customerFolderName
 
     logger.info(
         f"[{tracking_model.request_id}] Workflow detail:\n",

@@ -97,7 +97,7 @@ def fake_tracking_model():
 
 # === Tests for Pdf001Template ===
 def test_pdf001_extract_metadata_and_tables_simple():
-    tmpl = pp.Pdf001Template(tracking_model=fake_tracking_model() if False else Mock(), source=pp.SourceType.S3)
+    tmpl = pp.Pdf001Template(tracking_model=fake_tracking_model() if False else Mock(), source=pp.SourceType.SFTP)
     lines = [
         "訂購編號：PO12345",
         "供應商：ACME",
@@ -120,7 +120,7 @@ def test_pdf001_extract_metadata_and_tables_simple():
 def test_pdf001_parse_file_to_json_local(monkeypatch, fake_tracking_model):
     # patch ext_extraction.FileExtensionProcessor and fitz.open
     fake_file_obj = FakeFileObj(source="local", file_path="/tmp/fake.pdf")
-    monkeypatch.setattr(pp.ext_extraction, "FileExtensionProcessor", lambda tracking_model, source: fake_file_obj)
+    monkeypatch.setattr(pp.file_extraction, "FileExtensionProcessor", lambda tracking_model, source: fake_file_obj)
 
     # Create fitz.open mock returning doc with pages
     doc = MockFitzDoc(["訂購編號：POX\nline2", "供應商：ACME\n其他：VAL"])
@@ -128,7 +128,7 @@ def test_pdf001_parse_file_to_json_local(monkeypatch, fake_tracking_model):
     # but pdf_processor uses fitz.open, so patch fitz.open specifically
     monkeypatch.setattr(pp.fitz, "open", lambda *args, **kwargs: doc)
 
-    res = pp.Pdf001Template(tracking_model=fake_tracking_model, source=pp.SourceType.S3).parse_file_to_json()
+    res = pp.Pdf001Template(tracking_model=fake_tracking_model, source=pp.SourceType.SFTP).parse_file_to_json()
     assert res["status"] == "success"
     assert res["po_number"] == "POX"
 
@@ -136,9 +136,9 @@ def test_pdf001_parse_file_to_json_failed(monkeypatch, fake_tracking_model):
     # simulate FileExtensionProcessor raising
     def raise_factory(*args, **kwargs):
         raise RuntimeError("fail ext")
-    monkeypatch.setattr(pp.ext_extraction, "FileExtensionProcessor", raise_factory)
+    monkeypatch.setattr(pp.file_extraction, "FileExtensionProcessor", raise_factory)
 
-    res = pp.Pdf001Template(tracking_model=fake_tracking_model, source=pp.SourceType.S3).parse_file_to_json()
+    res = pp.Pdf001Template(tracking_model=fake_tracking_model, source=pp.SourceType.SFTP).parse_file_to_json()
     assert res["status"] == "failed"
     assert "fail ext" in res["error"]
 
@@ -150,9 +150,9 @@ def test_pdf002_extract_metadata_notes_and_tables(monkeypatch, fake_tracking_mod
         MockPdfPlumberPage(text="更多行\n採購單號：SECOND", tables=[])
     ]
     monkeypatch.setattr(pp.pdfplumber, "open", lambda src: MockPdfPlumber(pages))
-    monkeypatch.setattr(pp.ext_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
+    monkeypatch.setattr(pp.file_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
 
-    res = pp.Pdf002Template(tracking_model=fake_tracking_model, source=pp.SourceType.S3).parse_file_to_json()
+    res = pp.Pdf002Template(tracking_model=fake_tracking_model, source=pp.SourceType.SFTP).parse_file_to_json()
     assert res["status"] == "success"
     # Pdf002 sets po_number from 採購單號 or 採購單號 alternative
     assert res["po_number"] in (None, "PONUM", "SECOND") or "items" in res
@@ -162,13 +162,13 @@ def test_pdf002_extract_tables_handles_pdfplumber_error(monkeypatch):
     def raise_open(x):
         raise RuntimeError("pdfplumber fail")
     monkeypatch.setattr(pp.pdfplumber, "open", raise_open)
-    tmpl = pp.Pdf002Template(tracking_model=Mock(), source=pp.SourceType.S3)
+    tmpl = pp.Pdf002Template(tracking_model=Mock(), source=pp.SourceType.SFTP)
     rows = tmpl.extract_tables(io.BytesIO(b""))
     assert rows == []  # on error returns []
 
 # === Tests for Pdf004Template ===
 def test_pdf004_parse_item_lines_and_build_table():
-    tmpl = pp.Pdf004Template(tracking_model=Mock(), source=pp.SourceType.S3)
+    tmpl = pp.Pdf004Template(tracking_model=Mock(), source=pp.SourceType.SFTP)
     # lines containing product codes and potential additional_spec
     lines = [
         "S1234567 品名A 2 pcs 1,000 2,000 2025-01-01 0",
@@ -187,13 +187,13 @@ def test_pdf004_parse_item_lines_and_build_table():
 def test_pdf004_parse_file_to_json_with_pdfplumber(monkeypatch, fake_tracking_model):
     pages = [MockPdfPlumberPage(text="採購單號：PO444\nS1234567 品名A 2 pcs 1,000 2,000 2025-01-01 0")]
     monkeypatch.setattr(pp.pdfplumber, "open", lambda src: MockPdfPlumber(pages))
-    monkeypatch.setattr(pp.ext_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
-    res = pp.Pdf004Template(tracking_model=fake_tracking_model, source=pp.SourceType.S3).parse_file_to_json()
+    monkeypatch.setattr(pp.file_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
+    res = pp.Pdf004Template(tracking_model=fake_tracking_model, source=pp.SourceType.SFTP).parse_file_to_json()
     assert res["status"] == "success"
 
 # === Tests for Pdf006Template ===
 def test_pdf006_parse_kv_and_notes_and_items():
-    tmpl = pp.Pdf006Template(tracking_model=Mock(), source=pp.SourceType.S3)
+    tmpl = pp.Pdf006Template(tracking_model=Mock(), source=pp.SourceType.SFTP)
     lines = [
         "訂購單號：PO006",
         "廠商名稱12345678台灣大昌華嘉股份有限公司something",
@@ -214,7 +214,7 @@ def test_pdf006_parse_kv_and_notes_and_items():
     pages = [MockPdfPlumberPage(text="\n".join(lines))]
     monkeypatch_patch = pytest.MonkeyPatch()
     monkeypatch_patch.setattr(pp.pdfplumber, "open", lambda src: MockPdfPlumber(pages))
-    monkeypatch_patch.setattr(pp.ext_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
+    monkeypatch_patch.setattr(pp.file_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
     try:
         res = tmpl.parse_file_to_json()
         assert res["status"] == "success"
@@ -224,7 +224,7 @@ def test_pdf006_parse_kv_and_notes_and_items():
 # === Tests for Pdf007Template ===
 def test_pdf007_extract_kv_and_notes_and_tables(monkeypatch, fake_tracking_model):
     # Test _extract_key_value_pairs
-    tmpl = pp.Pdf007Template(tracking_model=Mock(), source=pp.SourceType.S3)
+    tmpl = pp.Pdf007Template(tracking_model=Mock(), source=pp.SourceType.SFTP)
     line = "供應商：ACME 公司：XYZ"
     kv = tmpl._extract_key_value_pairs(line)
     assert "供應商" in kv and "公司" in kv
@@ -239,14 +239,14 @@ def test_pdf007_extract_kv_and_notes_and_tables(monkeypatch, fake_tracking_model
         MockPdfPlumberPage(text="請購明細單號：REQ123\n其他：X", tables=[["請購明細單號", "數量"], ["REQ123", "1"]])
     ]
     monkeypatch.setattr(pp.pdfplumber, "open", lambda src: MockPdfPlumber(pages))
-    monkeypatch.setattr(pp.ext_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
-    res = pp.Pdf007Template(tracking_model=fake_tracking_model, source=pp.SourceType.S3).parse_file_to_json()
+    monkeypatch.setattr(pp.file_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
+    res = pp.Pdf007Template(tracking_model=fake_tracking_model, source=pp.SourceType.SFTP).parse_file_to_json()
     assert res["status"] == "success"
     assert "po_number" in res
 
 # === Tests for Pdf008Template ===
 def test_pdf008_time_logic_and_tables():
-    tmpl = pp.Pdf008Template(tracking_model=Mock(), source=pp.SourceType.S3)
+    tmpl = pp.Pdf008Template(tracking_model=Mock(), source=pp.SourceType.SFTP)
     # test extract_metadata_from_lines hour merging logic
     meta_lines = [
         "預約退貨時段：",
@@ -266,8 +266,8 @@ def test_pdf008_time_logic_and_tables():
 def test_pdf008_parse_file_to_json(monkeypatch, fake_tracking_model):
     pages = [MockPdfPlumberPage(text="退貨單號 RET001\n1 RET001 2025-01-01 2")]
     monkeypatch.setattr(pp.pdfplumber, "open", lambda src: MockPdfPlumber(pages))
-    monkeypatch.setattr(pp.ext_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
-    res = pp.Pdf008Template(tracking_model=fake_tracking_model, source=pp.SourceType.S3).parse_file_to_json()
+    monkeypatch.setattr(pp.file_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
+    res = pp.Pdf008Template(tracking_model=fake_tracking_model, source=pp.SourceType.SFTP).parse_file_to_json()
     assert res["status"] == "success"
     assert "items" in res
 
@@ -277,7 +277,7 @@ def test_pdf007_extract_tables_pdfplumber_error(monkeypatch):
     def raise_open(x):
         raise RuntimeError("boom")
     monkeypatch.setattr(pp.pdfplumber, "open", raise_open)
-    tmpl = pp.Pdf007Template(tracking_model=Mock(), source=pp.SourceType.S3)
+    tmpl = pp.Pdf007Template(tracking_model=Mock(), source=pp.SourceType.SFTP)
     rows = tmpl.extract_tables(io.BytesIO(b""))
     assert rows == []
 
@@ -288,8 +288,8 @@ def test_pdf002_parse_file_to_json_exception(monkeypatch, fake_tracking_model):
     def raise_open(x):
         raise ValueError("broken pdf")
     monkeypatch.setattr(pp.pdfplumber, "open", raise_open)
-    monkeypatch.setattr(pp.ext_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
-    result = pp.Pdf002Template(tracking_model=fake_tracking_model, source=pp.SourceType.S3).parse_file_to_json()
+    monkeypatch.setattr(pp.file_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj(source="s3"))
+    result = pp.Pdf002Template(tracking_model=fake_tracking_model, source=pp.SourceType.SFTP).parse_file_to_json()
     assert result["status"] == "failed"
     assert "broken pdf" in result["error"]
 
@@ -299,8 +299,8 @@ def test_pdf007_parse_file_to_json_exception(monkeypatch, fake_tracking_model):
     def raise_open(x):
         raise IOError("cannot read file")
     monkeypatch.setattr(pp.pdfplumber, "open", raise_open)
-    monkeypatch.setattr(pp.ext_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj())
-    result = pp.Pdf007Template(tracking_model=fake_tracking_model, source=pp.SourceType.S3).parse_file_to_json()
+    monkeypatch.setattr(pp.file_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj())
+    result = pp.Pdf007Template(tracking_model=fake_tracking_model, source=pp.SourceType.SFTP).parse_file_to_json()
     assert result["status"] == "failed"
     assert "cannot read file" in result["error"]
 
@@ -309,14 +309,14 @@ def test_pdf001_s3_mode_uses_buffer(monkeypatch, fake_tracking_model):
     """Test Pdf001Template can handle S3 source with buffer bytes and return valid JSON result."""
     # Fake file object for S3 source
     fake_file_obj = FakeFileObj(source="s3", buffer_bytes=b"%PDF-mock-content")
-    monkeypatch.setattr(pp.ext_extraction, "FileExtensionProcessor", lambda tracking_model, source: fake_file_obj)
+    monkeypatch.setattr(pp.file_extraction, "FileExtensionProcessor", lambda tracking_model, source: fake_file_obj)
 
     # Mock PDF opened by fitz (contains text to simulate real parsing)
     doc = MockFitzDoc(["page1 text 訂購編號：POABC"])
     monkeypatch.setattr(pp.fitz, "open", lambda *args, **kwargs: doc)
 
     # Run parser
-    pdf_tmpl = pp.Pdf001Template(tracking_model=fake_tracking_model, source=pp.SourceType.S3)
+    pdf_tmpl = pp.Pdf001Template(tracking_model=fake_tracking_model, source=pp.SourceType.SFTP)
     res = pdf_tmpl.parse_file_to_json()
 
     # Verify output is structured and successful
@@ -332,7 +332,7 @@ def test_pdf001_s3_mode_uses_buffer(monkeypatch, fake_tracking_model):
 
 def test_pdf004_parse_item_lines_with_additional_spec():
     """Test Pdf004Template.parse_item_lines can handle multiline or extra text safely."""
-    tmpl = pp.Pdf004Template(tracking_model=Mock(), source=pp.SourceType.S3)
+    tmpl = pp.Pdf004Template(tracking_model=Mock(), source=pp.SourceType.SFTP)
 
     # Case: second line may or may not be continuation (implementation-agnostic)
     lines = [
@@ -354,8 +354,8 @@ def test_pdf006_no_items_returns_failed(monkeypatch, fake_tracking_model):
     # patch pdfplumber to return pages without matching pattern
     pages = [MockPdfPlumberPage(text="隨便內容沒有商品代碼")]
     monkeypatch.setattr(pp.pdfplumber, "open", lambda src: MockPdfPlumber(pages))
-    monkeypatch.setattr(pp.ext_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj())
-    result = pp.Pdf006Template(tracking_model=fake_tracking_model, source=pp.SourceType.S3).parse_file_to_json()
+    monkeypatch.setattr(pp.file_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj())
+    result = pp.Pdf006Template(tracking_model=fake_tracking_model, source=pp.SourceType.SFTP).parse_file_to_json()
     assert result["status"] == "failed" or result["items"] == []
 
 
@@ -364,6 +364,6 @@ def test_pdf008_exception_during_pdfplumber(monkeypatch, fake_tracking_model):
     def raise_open(x):
         raise RuntimeError("pdf broken")
     monkeypatch.setattr(pp.pdfplumber, "open", raise_open)
-    monkeypatch.setattr(pp.ext_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj())
-    result = pp.Pdf008Template(tracking_model=fake_tracking_model, source=pp.SourceType.S3).parse_file_to_json()
+    monkeypatch.setattr(pp.file_extraction, "FileExtensionProcessor", lambda tracking_model, source: FakeFileObj())
+    result = pp.Pdf008Template(tracking_model=fake_tracking_model, source=pp.SourceType.SFTP).parse_file_to_json()
     assert result["status"] == "failed"

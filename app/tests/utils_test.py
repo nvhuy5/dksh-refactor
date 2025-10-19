@@ -7,11 +7,11 @@ from pathlib import Path
 import os
 import logging
 import traceback
-from fastapi_celery.utils import log_helpers
+from fastapi_celery.utils import log_helper
 from fastapi_celery.connections import aws_connection
 from fastapi_celery.models.class_models import SourceType, DocumentType, PODataParsed, StatusEnum
-from fastapi_celery.utils.ext_extraction import FileExtensionProcessor
-from fastapi_celery.utils.log_helpers import (
+from fastapi_celery.utils.file_extraction import FileExtensionProcessor
+from fastapi_celery.utils.log_helper import (
     logging_config,
     ValidatingLoggerAdapter,
     ServiceLog,
@@ -23,7 +23,7 @@ from fastapi_celery.utils.read_n_write_s3 import any_json_in_s3_prefix, _s3_conn
 
 
 logger_name = "Extension Detection"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 logger = logging.getLogger(logger_name)
 
 # Constants used in tests
@@ -90,7 +90,7 @@ def test_file_extension_processor_local_file(
     # Mock for os.path.isfile to simulate file existence
     with patch(OS_PATH_ISFILE, return_value=True):
         tracking_model = TrackingModel(request_id="test", file_path=file_path)
-        processor = FileExtensionProcessor(tracking_model=tracking_model, source=SourceType.LOCAL)
+        processor = FileExtensionProcessor(tracking_model=tracking_model, source_type=SourceType.LOCAL)
 
         assert processor.file_name == "local_file.txt"
         assert os.path.normpath(str(processor.file_path_parent)) == os.path.normpath(
@@ -119,7 +119,7 @@ def test_file_extension_processor_local_file_not_found(
     with patch(OS_PATH_ISFILE, return_value=False):
         tracking_model = TrackingModel(request_id="test", file_path=file_path)
         with pytest.raises(FileNotFoundError, match=f"Local file '{file_path}' does not exist."):
-            FileExtensionProcessor(tracking_model=tracking_model, source=SourceType.LOCAL)
+            FileExtensionProcessor(tracking_model=tracking_model, source_type=SourceType.LOCAL)
 
 
 def test_file_extension_processor_invalid_extension(
@@ -142,7 +142,7 @@ def test_file_extension_processor_invalid_extension(
     with patch(OS_PATH_ISFILE, return_value=False):
         tracking_model = TrackingModel(request_id="test", file_path=file_path)
         with pytest.raises(FileNotFoundError):
-            FileExtensionProcessor(tracking_model=tracking_model, source=SourceType.LOCAL)
+            FileExtensionProcessor(tracking_model=tracking_model, source_type=SourceType.LOCAL)
 
 
 # === Test for _get_document_type ===
@@ -177,7 +177,7 @@ def test_get_document_type_s3(
 
     file_path = "bucket_name/folder/data.csv"
     tracking_model = TrackingModel(request_id="test", file_path=file_path)
-    processor = FileExtensionProcessor(tracking_model=tracking_model, source=SourceType.S3)
+    processor = FileExtensionProcessor(tracking_model=tracking_model, source_type=SourceType.SFTP)
 
     document_type = processor._get_document_type()
     assert document_type == DocumentType.ORDER
@@ -213,7 +213,7 @@ def test_get_document_type_master_data(
 
     file_path = "DKSH_SFTP/MASTER_DATA/file.csv"
     tracking_model = TrackingModel(request_id="test", file_path=file_path)
-    processor = FileExtensionProcessor(tracking_model=tracking_model, source=SourceType.S3)
+    processor = FileExtensionProcessor(tracking_model=tracking_model, source_type=SourceType.SFTP)
 
     document_type = processor._get_document_type()
     assert document_type == DocumentType.MASTER_DATA
@@ -246,7 +246,7 @@ def test_get_document_type_order_local(
     """
     file_path = "NOT_MASTER_DATA\\SAP_Master_data.txt"
     tracking_model = TrackingModel(request_id="test", file_path=file_path)
-    processor = FileExtensionProcessor(tracking_model=tracking_model, source=SourceType.LOCAL)
+    processor = FileExtensionProcessor(tracking_model=tracking_model, source_type=SourceType.LOCAL)
 
     document_type = processor._get_document_type()
     assert document_type == DocumentType.ORDER
@@ -283,7 +283,7 @@ def test_load_s3_file_success(
     mock_get_object.return_value = mock_buffer
 
     tracking_model = TrackingModel(request_id="test", file_path=file_path)
-    processor = FileExtensionProcessor(tracking_model=tracking_model, source=SourceType.S3)
+    processor = FileExtensionProcessor(tracking_model=tracking_model, source_type=SourceType.SFTP)
 
     assert processor.object_buffer == mock_buffer
     assert processor.file_name == Path(file_path).name
@@ -322,7 +322,7 @@ def test_load_s3_file_not_found(
     with pytest.raises(
         FileNotFoundError, match=f"File '{file_path}' could not be loaded from S3"
     ):
-        FileExtensionProcessor(tracking_model=tracking_model, source=SourceType.S3)
+        FileExtensionProcessor(tracking_model=tracking_model, source_type=SourceType.SFTP)
 
 
 # === Log helper ===

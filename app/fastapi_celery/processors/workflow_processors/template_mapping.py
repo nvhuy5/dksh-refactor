@@ -2,16 +2,16 @@ import logging
 import traceback
 import pandas as pd
 import json
-from utils import log_helpers
+from utils import log_helper
 from models.class_models import StatusEnum, StepOutput, ApiUrl, DocumentType
 from connections.be_connection import BEConnector
 from models.tracking_models import ServiceLog, LogType
 
 # === Logger setup ===
 logger_name = f"Workflow Processor - {__name__}"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # ====================
 
 FAILED_PARSE_API_MSG = "Failed to call template-parse API"

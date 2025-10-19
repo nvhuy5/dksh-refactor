@@ -5,8 +5,9 @@ import chardet
 import logging
 from typing import List, Optional, Tuple
 
+from utils import file_extraction
 from models.tracking_models import TrackingModel
-from utils import log_helpers, ext_extraction
+from utils import log_helper
 from models.class_models import PODataParsed, SourceType, StatusEnum
 import config_loader
 
@@ -14,21 +15,21 @@ METADATA_SEPARATOR = config_loader.get_env_variable("METADATA_SEPARATOR", "：")
 
 # === Logging setup ===
 logger_name = "CSV Processor"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # =====================
 
 
 class CSVProcessor:
     """Processor for handling CSV PO template."""
 
-    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.S3):
+    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.SFTP):
         """Initialize with CSV file path and source type.
 
         Args:
             file_path (Path): The path to the CSV file.
-            source (SourceType, optional): The source type, defaults to SourceType.S3.
+            source (SourceType, optional): The source type, defaults to SourceType.SFTP.
         """
         self.tracking_model = tracking_model
         self.source = source
@@ -41,14 +42,14 @@ class CSVProcessor:
         Returns:
             list: A list of non-empty rows from the CSV file.
         """
-        file_object = ext_extraction.FileExtensionProcessor(
-            tracking_model=self.tracking_model, source=self.source
+        file_object = file_extraction.FileExtensionProcessor(
+            tracking_model=self.tracking_model, source_type=self.source
         )
-        file_object._extract_file_extension()
+        file_object._get_file_extension()
         self.document_type = file_object._get_document_type()
         self.capacity = file_object._get_file_capacity()
 
-        if file_object.source == "local":
+        if file_object.source_type == "local":
             with open(file_object.file_path, "rb") as csv_file:
                 content = csv_file.read()
         else:

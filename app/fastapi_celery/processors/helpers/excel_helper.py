@@ -5,8 +5,9 @@ import re
 from typing import List, Dict
 
 import logging
+from utils import file_extraction
 from models.tracking_models import TrackingModel
-from utils import log_helpers, ext_extraction
+from utils import log_helper
 from models.class_models import SourceType, PODataParsed, MasterDataParsed
 import config_loader
 
@@ -16,11 +17,11 @@ PO_MAPPING_KEY = ""
 # ===
 # Set up logging
 logger_name = "Excel Helper"
-log_helpers.logging_config(logger_name)
+log_helper.logging_config(logger_name)
 base_logger = logging.getLogger(logger_name)
 
 # Wrap the base logger with the adapter
-logger = log_helpers.ValidatingLoggerAdapter(base_logger, {})
+logger = log_helper.ValidatingLoggerAdapter(base_logger, {})
 # ===
 
 
@@ -31,15 +32,15 @@ class ExcelHelper:
     and provides methods to parse the content into JSON format.
     """
 
-    def __init__(self, tracking_model: TrackingModel, source: SourceType = SourceType.S3):
+    def __init__(self, tracking_model: TrackingModel, source_type: SourceType = SourceType.SFTP):
         """Initialize the Excel processor with a file path and source type.
 
         Args:
             file (Path): The path to the Excel file.
-            source (SourceType, optional): The source type, defaults to SourceType.S3.
+            source (SourceType, optional): The source type, defaults to SourceType.SFTP.
         """
         self.tracking_model = tracking_model
-        self.source = source
+        self.source_type = source_type
         self.rows = self.read_rows()
         self.separator = METADATA_SEPARATOR
         self.po_number = None
@@ -53,16 +54,16 @@ class ExcelHelper:
         Returns:
             List[List[str]]: A list of rows, where each row is a list of strings.
         """
-        file_object = ext_extraction.FileExtensionProcessor(
-            tracking_model=self.tracking_model, source=self.source
+        file_object = file_extraction.FileExtensionProcessor(
+            tracking_model=self.tracking_model, source_type=self.source_type
         )
-        file_object._extract_file_extension()
+        file_object._get_file_extension()
         self.document_type = file_object._get_document_type()
         self.capacity = file_object._get_file_capacity()
         ext = file_object.file_extension
 
         # Load file from local or S3
-        if file_object.source == "local":
+        if file_object.source_type == "local":
             file_input = file_object.file_path  # this is Path
         else:
             file_object.object_buffer.seek(0)
